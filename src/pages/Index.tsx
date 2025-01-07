@@ -5,12 +5,13 @@ import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
+import { speakText } from "@/utils/textToSpeech";
 
 interface Conversation {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
-  isVoiceInput?: boolean;  // Added this property as optional
+  isVoiceInput?: boolean;
 }
 
 const Index = () => {
@@ -61,12 +62,18 @@ const Index = () => {
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
         
+        // Add the assistant's response to conversation history
         setConversationHistory(prev => [...prev, {
           type: "assistant",
           content: assistantResponse,
           timestamp: new Date(),
           isVoiceInput
         }]);
+
+        // If this was a voice input, speak the response
+        if (isVoiceInput) {
+          await speakText(assistantResponse);
+        }
 
         toast({
           title: "Response Received",
