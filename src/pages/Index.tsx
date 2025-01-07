@@ -13,9 +13,8 @@ interface Conversation {
 }
 
 const Index = () => {
-  const { responses, processImageData } = useImageAnalysis();
+  const { responses, processImageData, conversationHistory, setConversationHistory } = useImageAnalysis();
   const { toast } = useToast();
-  const [conversationHistory, setConversationHistory] = useState<Conversation[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleInput = useCallback(async (input: string) => {
@@ -36,7 +35,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           prompt: input,
-          conversationHistory: conversationHistory
+          conversationHistory
         })
       });
 

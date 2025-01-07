@@ -24,16 +24,29 @@ serve(async (req) => {
     console.log('Image data received:', image ? 'Yes' : 'No');
 
     // Create a context-aware system prompt
-    const systemPrompt = `You are an expert industrial equipment analyst providing detailed, technical analysis. 
-    ${image ? `For image analysis, structure your response in these sections:
-    1) Type and model identification - Include specific details about make, model, and key specifications
-    2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
-    3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
-    4) Environmental impact analysis - Consider energy efficiency, emissions, and sustainability aspects` 
-    : 'Provide detailed, technical responses about equipment maintenance, optimization, and troubleshooting.'}
-    
-    Consider the conversation history for context and maintain a natural, engaging dialogue. Ask clarifying questions when needed.
-    If the user asks about specific aspects of the equipment, focus your response on those aspects while maintaining awareness of the full context.`;
+    let systemPrompt = ''
+    const lastImageAnalysis = conversationHistory?.find(msg => 
+      msg.type === 'assistant' && msg.content.includes('Type and Model Identification')
+    )
+
+    if (image) {
+      systemPrompt = `You are an expert industrial equipment analyst providing detailed, technical analysis. 
+      Structure your response in these sections:
+      1) Type and model identification - Include specific details about make, model, and key specifications
+      2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
+      3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
+      4) Environmental impact analysis - Consider energy efficiency, emissions, and sustainability aspects`
+    } else if (lastImageAnalysis) {
+      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
+      "${lastImageAnalysis.content}"
+      
+      Provide detailed, technical responses about the equipment shown in that image, focusing on maintenance, optimization, and troubleshooting.
+      If the user asks about aspects not visible in the image, acknowledge this limitation and suggest what additional information or images might be helpful.`
+    } else {
+      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
+      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.
+      Explain that this will help provide more accurate and relevant assistance.`
+    }
 
     // Build the conversation context
     const messages = [];
