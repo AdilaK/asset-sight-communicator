@@ -15,47 +15,53 @@ interface Conversation {
 }
 
 export const useImageAnalysis = () => {
+  const { toast } = useToast();
   const [responses, setResponses] = useState<Response[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [analyzedImages] = useState(new Set<string>());
   const [conversationHistory, setConversationHistory] = useState<Conversation[]>([]);
   const lastProcessedTime = useRef<number>(0);
-  const { toast } = useToast();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const analyzedImagesRef = useRef(new Set<string>());
 
-  // Clear timeout on unmount
   useEffect(() => {
     return () => {
-      if (retryTimeout) {
-        clearTimeout(retryTimeout);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [retryTimeout]);
+  }, []);
 
-  // Create a stable reference to the processImage function
   const processImage = useCallback(async (imageData: ImageData, isFromCamera: boolean = false) => {
+    if (isAnalyzing) return;
+
     // For camera frames, implement rate limiting
     if (isFromCamera) {
       const currentTime = Date.now();
       const timeSinceLastProcess = currentTime - lastProcessedTime.current;
-      
-      // Only process camera frames every 5 seconds
       if (timeSinceLastProcess < 5000) {
         return;
       }
       lastProcessedTime.current = currentTime;
     }
 
-    if (isAnalyzing) return;
-
     const canvas = document.createElement('canvas');
     canvas.width = imageData.width;
     canvas.height = imageData.height;
     const ctx = canvas.getContext('2d');
-    ctx?.putImageData(imageData, 0, 0);
+    
+    if (!ctx) {
+      toast({
+        title: "Error",
+        description: "Could not process image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
     const imageHash = canvas.toDataURL('image/jpeg');
 
-    if (analyzedImages.has(imageHash)) {
+    if (analyzedImagesRef.current.has(imageHash)) {
       return;
     }
 
@@ -89,16 +95,15 @@ export const useImageAnalysis = () => {
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 429) {
-          if (retryTimeout) {
-            clearTimeout(retryTimeout);
+          const retryAfter = errorData.retryAfter || 60;
+          
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
           }
           
-          const retryAfter = errorData.retryAfter || 60;
-          const timeout = setTimeout(() => {
+          retryTimeoutRef.current = setTimeout(() => {
             processImage(imageData, isFromCamera);
           }, retryAfter * 1000);
-          
-          setRetryTimeout(timeout);
           
           toast({
             title: "Rate Limit Exceeded",
@@ -107,7 +112,6 @@ export const useImageAnalysis = () => {
           });
           return;
         }
-        
         throw new Error(errorData.error || 'Analysis failed');
       }
 
@@ -144,14 +148,13 @@ export const useImageAnalysis = () => {
         }
       ];
 
-      // Add AI response to conversation history
       setConversationHistory(prev => [...prev, {
         type: "assistant",
         content: text,
         timestamp: new Date()
       }]);
 
-      analyzedImages.add(imageHash);
+      analyzedImagesRef.current.add(imageHash);
       setResponses(structuredResponses);
       
       toast({
@@ -169,13 +172,12 @@ export const useImageAnalysis = () => {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [toast, isAnalyzing, retryTimeout, analyzedImages, conversationHistory]);
+  }, [toast, isAnalyzing, conversationHistory]);
 
-  // Create a debounced version of processImage
   const processImageData = useCallback(
-    debounce((imageData: ImageData, isFromCamera: boolean = false) => {
+    (imageData: ImageData, isFromCamera: boolean = false) => {
       processImage(imageData, isFromCamera);
-    }, 1000),
+    },
     [processImage]
   );
 
