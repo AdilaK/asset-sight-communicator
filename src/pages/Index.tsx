@@ -16,6 +16,7 @@ const Index = () => {
   const [responses, setResponses] = useState<Response[]>([]);
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const processImageData = async (imageData: ImageData) => {
     if (isAnalyzing) return;
@@ -64,9 +65,32 @@ const Index = () => {
       }
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', errorText);
-        throw new Error(`Analysis failed: ${errorText}`);
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        
+        if (response.status === 429) {
+          // Clear any existing retry timeout
+          if (retryTimeout) {
+            clearTimeout(retryTimeout);
+          }
+          
+          // Set up automatic retry
+          const retryAfter = errorData.retryAfter || 60;
+          const timeout = setTimeout(() => {
+            processImageData(imageData);
+          }, retryAfter * 1000);
+          
+          setRetryTimeout(timeout);
+          
+          toast({
+            title: "Rate Limit Exceeded",
+            description: `Analysis will automatically retry in ${retryAfter} seconds...`,
+            duration: retryAfter * 1000,
+          });
+          return;
+        }
+        
+        throw new Error(errorData.error || 'Analysis failed');
       }
 
       const result = await response.json();
@@ -142,7 +166,16 @@ const Index = () => {
       }
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        const errorData = await response.json();
+        if (response.status === 429) {
+          toast({
+            title: "Rate Limit Exceeded",
+            description: "Please try again in a few minutes",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(errorData.error || 'Analysis failed');
       }
 
       const result = await response.json();
@@ -165,11 +198,20 @@ const Index = () => {
       console.error('Analysis error:', error);
       toast({
         title: "Analysis Failed",
-        description: "Unable to process your request",
+        description: error.message || "Unable to process your request",
         variant: "destructive",
       });
     }
   }, [toast]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
+  }, [retryTimeout]);
 
   return (
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6">

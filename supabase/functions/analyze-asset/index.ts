@@ -68,6 +68,27 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.text()
       console.error('Gemini API error:', error)
+      
+      // Parse the error to provide more user-friendly messages
+      try {
+        const parsedError = JSON.parse(error)
+        if (parsedError.error?.code === 429) {
+          return new Response(
+            JSON.stringify({ 
+              error: "Rate limit exceeded. Please try again in a few minutes.",
+              retryAfter: 60 // Suggest retry after 1 minute
+            }),
+            { 
+              status: 429,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
+        }
+      } catch (e) {
+        // If error parsing fails, throw the original error
+        throw new Error(`Gemini API error: ${error}`)
+      }
+      
       throw new Error(`Gemini API error: ${error}`)
     }
 
@@ -84,7 +105,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        status: 500,
+        status: error.status || 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
