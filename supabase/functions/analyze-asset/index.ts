@@ -7,13 +7,12 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { image, prompt } = await req.json()
+    const { image, prompt, conversationHistory } = await req.json()
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     
     if (!apiKey) {
@@ -21,15 +20,25 @@ serve(async (req) => {
     }
 
     console.log('Processing request with prompt:', prompt);
+    console.log('Conversation history:', conversationHistory);
     console.log('Image data received:', image ? 'Yes' : 'No');
 
-    const defaultPrompt = `Please analyze this equipment in detail and provide:
+    // Create a context-aware prompt that includes conversation history
+    const contextPrompt = conversationHistory?.length 
+      ? `Previous conversation:\n${conversationHistory
+          .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+          .join('\n')}\n\nCurrent question: ${prompt}`
+      : prompt;
+
+    const defaultPrompt = `You are an expert industrial equipment analyst. Please provide detailed, technical, yet understandable responses about equipment maintenance, optimization, and troubleshooting. Consider safety implications, efficiency improvements, and best practices. Be conversational and encourage follow-up questions.
+
+If analyzing an image, please provide:
 1) Type and model identification - Include specific details about make, model, and key specifications
 2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
 3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
 4) Environmental impact analysis - Consider energy efficiency, emissions, and sustainability aspects
-5) Optimization recommendations - Suggest improvements for performance, efficiency, and longevity
-Please be specific and detailed in your analysis, providing actionable insights and recommendations.`
+
+If responding to a text question, engage in a natural conversation while providing technical expertise. Ask clarifying questions when needed and suggest related topics that might be relevant.`;
 
     let requestBody;
     if (image) {
@@ -37,7 +46,7 @@ Please be specific and detailed in your analysis, providing actionable insights 
         contents: [{
           parts: [
             {
-              text: prompt || defaultPrompt
+              text: `${defaultPrompt}\n\n${contextPrompt}`
             },
             {
               inline_data: {
@@ -49,12 +58,11 @@ Please be specific and detailed in your analysis, providing actionable insights 
         }]
       };
     } else {
-      // For text-only analysis, create a more conversational prompt
       requestBody = {
         contents: [{
           parts: [
             {
-              text: `You are an expert industrial equipment analyst. Please provide detailed, technical, yet understandable responses to questions about equipment maintenance, optimization, and troubleshooting. Consider safety implications, efficiency improvements, and best practices in your response. Here is the user's question: ${prompt}`
+              text: `${defaultPrompt}\n\n${contextPrompt}`
             }
           ]
         }]
