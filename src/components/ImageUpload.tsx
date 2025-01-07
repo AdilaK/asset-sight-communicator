@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,11 @@ interface ImageUploadProps {
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -92,19 +97,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
 
   return (
     <div className="flex items-center justify-center w-full">
-      <label htmlFor="image-upload" className="cursor-pointer">
-        <Button variant="outline" className="gap-2">
-          <Upload className="w-4 h-4" />
-          Upload Image
-        </Button>
-        <input
-          id="image-upload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageUpload}
-        />
-      </label>
+      <Button 
+        variant="outline" 
+        className="gap-2"
+        onClick={handleButtonClick}
+      >
+        <Upload className="w-4 h-4" />
+        Upload Image
+      </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
     </div>
   );
 };
