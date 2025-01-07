@@ -3,9 +3,10 @@ import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  disabled?: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,11 +24,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Type your question..."
-        className="flex-1 px-4 py-2 rounded-lg bg-secondary text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-success"
+        disabled={disabled}
+        className="flex-1 px-4 py-2 rounded-lg bg-secondary text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-success disabled:opacity-50 disabled:cursor-not-allowed"
       />
       <button
         type="submit"
-        disabled={!message.trim()}
+        disabled={!message.trim() || disabled}
         className="p-2 rounded-lg bg-success text-white hover:bg-success/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Send className="w-6 h-6" />
