@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Mic, MicOff } from "lucide-react";
 
-// Define the SpeechRecognition types
 interface Window {
   SpeechRecognition: any;
   webkitSpeechRecognition: any;
