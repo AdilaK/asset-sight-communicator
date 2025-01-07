@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 
 interface CameraViewProps {
-  onFrame: (imageData: ImageData) => void;
+  onFrame: (imageData: ImageData, isFromCamera?: boolean) => void;
 }
 
 const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
@@ -54,7 +54,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
             canvasRef.current.width,
             canvasRef.current.height
           );
-          onFrame(imageData);
+          onFrame(imageData, true);
         }
       }
       requestAnimationFrame(processFrame);

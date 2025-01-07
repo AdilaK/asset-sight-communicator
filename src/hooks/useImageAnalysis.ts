@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import debounce from 'lodash/debounce';
 
@@ -13,6 +13,7 @@ export const useImageAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
   const [analyzedImages] = useState(new Set<string>());
+  const lastProcessedTime = useRef<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,7 +25,19 @@ export const useImageAnalysis = () => {
   }, [retryTimeout]);
 
   const processImageData = useCallback(
-    debounce(async (imageData: ImageData) => {
+    debounce(async (imageData: ImageData, isFromCamera: boolean = false) => {
+      // For camera frames, implement rate limiting
+      if (isFromCamera) {
+        const currentTime = Date.now();
+        const timeSinceLastProcess = currentTime - lastProcessedTime.current;
+        
+        // Only process camera frames every 5 seconds
+        if (timeSinceLastProcess < 5000) {
+          return;
+        }
+        lastProcessedTime.current = currentTime;
+      }
+
       if (isAnalyzing) return;
 
       const canvas = document.createElement('canvas');
@@ -49,7 +62,8 @@ export const useImageAnalysis = () => {
 
         console.log('Sending image data to API...', {
           imageSize: base64Image.length,
-          dimensions: `${imageData.width}x${imageData.height}`
+          dimensions: `${imageData.width}x${imageData.height}`,
+          source: isFromCamera ? 'camera' : 'upload'
         });
 
         const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/analyze-asset', {
@@ -74,7 +88,7 @@ export const useImageAnalysis = () => {
             
             const retryAfter = errorData.retryAfter || 60;
             const timeout = setTimeout(() => {
-              processImageData(imageData);
+              processImageData(imageData, isFromCamera);
             }, retryAfter * 1000);
             
             setRetryTimeout(timeout);
