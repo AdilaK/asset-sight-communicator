@@ -41,16 +41,26 @@ const Index = () => {
         dimensions: `${imageData.width}x${imageData.height}`
       });
 
-      const response = await fetch('/functions/v1/analyze-asset', {
+      // Use the complete Supabase Edge Function URL
+      const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/analyze-asset', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           image: base64Image,
           prompt: "Please analyze this machine or equipment and provide: 1) Type and model identification 2) Safety assessment 3) Condition evaluation 4) Environmental impact analysis"
         })
       });
+
+      // Check if the response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const errorText = await response.text();
+        console.error('Non-JSON response:', errorText);
+        throw new Error('Received non-JSON response from server');
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -111,15 +121,24 @@ const Index = () => {
 
   const handleInput = useCallback(async (input: string) => {
     try {
-      const response = await fetch('/functions/v1/analyze-asset', {
+      const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/analyze-asset', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           prompt: input
         })
       });
+
+      // Check if the response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const errorText = await response.text();
+        console.error('Non-JSON response:', errorText);
+        throw new Error('Received non-JSON response from server');
+      }
 
       if (!response.ok) {
         throw new Error('Analysis failed');
