@@ -15,9 +15,10 @@ declare global {
 
 interface VoiceInputProps {
   onInput: (text: string, isVoice: boolean) => void;
+  disabled?: boolean;
 }
 
-const VoiceInput: React.FC<VoiceInputProps> = ({ onInput }) => {
+const VoiceInput: React.FC<VoiceInputProps> = ({ onInput, disabled }) => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -54,10 +55,12 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onInput }) => {
     <div className="relative">
       <button
         onClick={startListening}
-        disabled={isListening}
+        disabled={isListening || disabled}
         className={`p-3 rounded-full transition-all duration-200 ${
           isListening
             ? "bg-success text-white animate-pulse"
+            : disabled
+            ? "bg-secondary/50 cursor-not-allowed"
             : "bg-secondary hover:bg-secondary/80 text-white"
         }`}
         aria-label={isListening ? "Recording..." : "Start recording"}
