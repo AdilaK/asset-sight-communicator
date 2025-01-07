@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Mic, MicOff } from "lucide-react";
 
-// Define the SpeechRecognition types
 interface Window {
   SpeechRecognition: any;
   webkitSpeechRecognition: any;
@@ -15,7 +14,7 @@ declare global {
 }
 
 interface VoiceInputProps {
-  onInput: (text: string) => void;
+  onInput: (text: string, isVoice: boolean) => void;
 }
 
 const VoiceInput: React.FC<VoiceInputProps> = ({ onInput }) => {
@@ -30,7 +29,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onInput }) => {
 
       recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
-        onInput(text);
+        onInput(text, true); // Pass true to indicate voice input
       };
 
       recognition.onerror = (event) => {
