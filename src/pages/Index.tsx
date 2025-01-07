@@ -5,13 +5,11 @@ import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
-import { speakText } from "@/utils/textToSpeech";
 
 interface Conversation {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
-  isVoiceInput?: boolean;
 }
 
 const Index = () => {
@@ -19,15 +17,14 @@ const Index = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleInput = useCallback(async (input: string, isVoiceInput: boolean = false) => {
+  const handleInput = useCallback(async (input: string) => {
     try {
       setIsProcessing(true);
-      
+      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
-        timestamp: new Date(),
-        isVoiceInput
+        timestamp: new Date()
       }]);
 
       const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/analyze-asset', {
@@ -38,8 +35,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           prompt: input,
-          conversationHistory,
-          isVoiceInput
+          conversationHistory
         })
       });
 
@@ -57,23 +53,15 @@ const Index = () => {
       }
 
       const result = await response.json();
-      console.log('Analysis result:', result);
+      console.log('Text analysis result:', result);
 
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
-        
-        // Add response to conversation history
         setConversationHistory(prev => [...prev, {
           type: "assistant",
           content: assistantResponse,
-          timestamp: new Date(),
-          isVoiceInput
+          timestamp: new Date()
         }]);
-
-        // If this was a voice input, speak the response
-        if (isVoiceInput) {
-          await speakText(assistantResponse);
-        }
 
         toast({
           title: "Response Received",
@@ -127,13 +115,12 @@ const Index = () => {
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     <span className="text-xs opacity-70 mt-1 block">
                       {msg.timestamp.toLocaleTimeString()}
-                      {msg.isVoiceInput && " 🎤"}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
-            <AnalysisInput onInput={(input) => handleInput(input, false)} />
+            <AnalysisInput onInput={handleInput} />
           </div>
         </div>
 
