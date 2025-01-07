@@ -4,6 +4,7 @@ import VoiceInput from "@/components/VoiceInput";
 import ChatInput from "@/components/ChatInput";
 import ResponseDisplay from "@/components/ResponseDisplay";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Response {
   type: "identification" | "safety" | "condition" | "environmental";
@@ -41,12 +42,12 @@ const Index = () => {
         dimensions: `${imageData.width}x${imageData.height}`
       });
 
-      // Use the complete Supabase Edge Function URL
+      // Use the complete Supabase Edge Function URL with the anon key from the client
       const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/analyze-asset', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
         },
         body: JSON.stringify({
           image: base64Image,
@@ -125,7 +126,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
         },
         body: JSON.stringify({
           prompt: input
