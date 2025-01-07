@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import CameraView from "@/components/Camera";
 import ResponseDisplay from "@/components/ResponseDisplay";
 import AnalysisInput from "@/components/AnalysisInput";
+import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,8 +39,6 @@ const Index = () => {
       const result = await response.json();
       console.log('Text analysis result:', result);
 
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
       toast({
         title: "Response Received",
         description: "New information available",
@@ -62,7 +61,14 @@ const Index = () => {
             Real-Time Asset Analysis
           </h1>
           
-          <CameraView onFrame={processImageData} />
+          <div className="grid gap-4">
+            <CameraView onFrame={processImageData} />
+            <div className="flex justify-center">
+              <span className="text-sm text-muted-foreground">or</span>
+            </div>
+            <ImageUpload onImageAnalysis={processImageData} />
+          </div>
+          
           <AnalysisInput onInput={handleInput} />
         </div>
 
