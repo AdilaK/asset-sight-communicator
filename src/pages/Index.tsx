@@ -5,7 +5,6 @@ import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
-import { speakText } from "@/utils/textToSpeech";
 
 interface Conversation {
   type: "user" | "assistant";
@@ -68,10 +67,6 @@ const Index = () => {
           timestamp: new Date(),
           isVoiceInput
         }]);
-
-        if (isVoiceInput) {
-          await speakText(assistantResponse);
-        }
 
         toast({
           title: "Response Received",
