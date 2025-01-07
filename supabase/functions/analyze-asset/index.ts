@@ -23,31 +23,38 @@ serve(async (req) => {
     console.log('Processing request with prompt:', prompt);
     console.log('Image data received:', image ? 'Yes' : 'No');
 
+    const defaultPrompt = `Please analyze this equipment in detail and provide:
+1) Type and model identification - Include specific details about make, model, and key specifications
+2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
+3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
+4) Environmental impact analysis - Consider energy efficiency, emissions, and sustainability aspects
+5) Optimization recommendations - Suggest improvements for performance, efficiency, and longevity
+Please be specific and detailed in your analysis, providing actionable insights and recommendations.`
+
     let requestBody;
     if (image) {
-      // For image analysis
       requestBody = {
         contents: [{
           parts: [
             {
-              text: prompt || "Please analyze this machine or equipment and provide: 1) Type and model identification 2) Safety assessment 3) Condition evaluation 4) Environmental impact analysis"
+              text: prompt || defaultPrompt
             },
             {
               inline_data: {
                 mime_type: "image/jpeg",
-                data: image.split(',')[1] // Remove data URL prefix if present
+                data: image.split(',')[1]
               }
             }
           ]
         }]
       };
     } else {
-      // For text-only analysis
+      // For text-only analysis, create a more conversational prompt
       requestBody = {
         contents: [{
           parts: [
             {
-              text: prompt
+              text: `You are an expert industrial equipment analyst. Please provide detailed, technical, yet understandable responses to questions about equipment maintenance, optimization, and troubleshooting. Consider safety implications, efficiency improvements, and best practices in your response. Here is the user's question: ${prompt}`
             }
           ]
         }]
@@ -69,14 +76,13 @@ serve(async (req) => {
       const error = await response.text()
       console.error('Gemini API error:', error)
       
-      // Parse the error to provide more user-friendly messages
       try {
         const parsedError = JSON.parse(error)
         if (parsedError.error?.code === 429) {
           return new Response(
             JSON.stringify({ 
               error: "Rate limit exceeded. Please try again in a few minutes.",
-              retryAfter: 60 // Suggest retry after 1 minute
+              retryAfter: 60
             }),
             { 
               status: 429,
@@ -85,7 +91,6 @@ serve(async (req) => {
           )
         }
       } catch (e) {
-        // If error parsing fails, throw the original error
         throw new Error(`Gemini API error: ${error}`)
       }
       

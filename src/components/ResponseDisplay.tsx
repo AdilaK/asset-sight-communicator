@@ -30,6 +30,15 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     }
   };
 
+  const formatContent = (content: string) => {
+    // Split content by bullet points or numbered lists
+    return content.split(/(?:\r?\n|\r)/).map((line, i) => (
+      <p key={i} className="text-gray-200 mb-2">
+        {line.trim()}
+      </p>
+    ));
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       {responses.map((response, index) => (
@@ -42,10 +51,12 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
           <div className="flex items-start gap-3">
             {getIcon(response.type, response.severity)}
             <div className="flex-1">
-              <h3 className="text-lg font-semibold capitalize mb-1">
+              <h3 className="text-lg font-semibold capitalize mb-2">
                 {response.type}
               </h3>
-              <p className="text-gray-200">{response.content}</p>
+              <div className="text-gray-200 space-y-1">
+                {formatContent(response.content)}
+              </div>
             </div>
           </div>
         </div>

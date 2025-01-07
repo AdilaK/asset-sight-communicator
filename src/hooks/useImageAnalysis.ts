@@ -15,7 +15,6 @@ export const useImageAnalysis = () => {
   const [analyzedImages] = useState(new Set<string>());
   const { toast } = useToast();
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (retryTimeout) {
@@ -28,7 +27,6 @@ export const useImageAnalysis = () => {
     debounce(async (imageData: ImageData) => {
       if (isAnalyzing) return;
 
-      // Convert ImageData to a hash for tracking
       const canvas = document.createElement('canvas');
       canvas.width = imageData.width;
       canvas.height = imageData.height;
@@ -36,7 +34,6 @@ export const useImageAnalysis = () => {
       ctx?.putImageData(imageData, 0, 0);
       const imageHash = canvas.toDataURL('image/jpeg');
 
-      // Skip if this image has already been analyzed
       if (analyzedImages.has(imageHash)) {
         return;
       }
@@ -45,7 +42,7 @@ export const useImageAnalysis = () => {
         setIsAnalyzing(true);
         toast({
           title: "Processing",
-          description: "Analyzing the image...",
+          description: "Analyzing the equipment in detail...",
         });
 
         const base64Image = canvas.toDataURL('image/jpeg');
@@ -62,8 +59,7 @@ export const useImageAnalysis = () => {
             'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hZXRjcXdhdHR2enp1c2Vxd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYxNTUzOTksImV4cCI6MjA1MTczMTM5OX0.XKsBfu_F7B9v2RHF5WPxhmQ_t32awvR5vVYDPjJaSi8`,
           },
           body: JSON.stringify({
-            image: base64Image,
-            prompt: "Please analyze this machine or equipment and provide: 1) Type and model identification 2) Safety assessment 3) Condition evaluation 4) Environmental impact analysis"
+            image: base64Image
           })
         });
 
@@ -107,46 +103,45 @@ export const useImageAnalysis = () => {
         const structuredResponses: Response[] = [
           {
             type: "identification",
-            content: sections[0]?.trim() || "Unable to identify the asset",
+            content: sections[0]?.trim() || "Unable to identify the equipment",
             severity: "info"
           },
           {
             type: "safety",
             content: sections[1]?.trim() || "Unable to assess safety",
-            severity: sections[1]?.toLowerCase().includes("warning") ? "warning" : "info"
+            severity: sections[1]?.toLowerCase().includes("warning") || sections[1]?.toLowerCase().includes("hazard") ? "warning" : "info"
           },
           {
             type: "condition",
             content: sections[2]?.trim() || "Unable to evaluate condition",
-            severity: sections[2]?.toLowerCase().includes("poor") ? "warning" : "info"
+            severity: sections[2]?.toLowerCase().includes("poor") || sections[2]?.toLowerCase().includes("maintenance required") ? "warning" : "info"
           },
           {
             type: "environmental",
             content: sections[3]?.trim() || "Unable to assess environmental impact",
-            severity: sections[3]?.toLowerCase().includes("concern") ? "warning" : "info"
+            severity: sections[3]?.toLowerCase().includes("concern") || sections[3]?.toLowerCase().includes("high impact") ? "warning" : "info"
           }
         ];
 
-        // Mark this image as analyzed
         analyzedImages.add(imageHash);
         
         setResponses(structuredResponses);
         toast({
           title: "Analysis Complete",
-          description: "New information available",
+          description: "Detailed equipment analysis available",
         });
       } catch (error: any) {
         console.error('Analysis error:', error);
         toast({
           title: "Analysis Failed",
-          description: error.message || "Unable to process the image",
+          description: error.message || "Unable to process the equipment image",
           variant: "destructive",
         });
         setResponses([]);
       } finally {
         setIsAnalyzing(false);
       }
-    }, 1000), // Debounce for 1 second
+    }, 1000),
     [toast, isAnalyzing, retryTimeout, analyzedImages]
   );
 
