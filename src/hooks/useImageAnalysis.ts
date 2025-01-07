@@ -8,11 +8,18 @@ interface Response {
   severity?: "info" | "warning" | "critical";
 }
 
+interface Conversation {
+  type: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
 export const useImageAnalysis = () => {
   const [responses, setResponses] = useState<Response[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
   const [analyzedImages] = useState(new Set<string>());
+  const [conversationHistory, setConversationHistory] = useState<Conversation[]>([]);
   const lastProcessedTime = useRef<number>(0);
   const { toast } = useToast();
 
@@ -74,14 +81,13 @@ export const useImageAnalysis = () => {
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hZXRjcXdhdHR2enp1c2Vxd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYxNTUzOTksImV4cCI6MjA1MTczMTM5OX0.XKsBfu_F7B9v2RHF5WPxhmQ_t32awvR5vVYDPjJaSi8`,
         },
         body: JSON.stringify({
-          image: base64Image
+          image: base64Image,
+          conversationHistory
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error:', errorData);
-        
         if (response.status === 429) {
           if (retryTimeout) {
             clearTimeout(retryTimeout);
@@ -138,6 +144,13 @@ export const useImageAnalysis = () => {
         }
       ];
 
+      // Add AI response to conversation history
+      setConversationHistory(prev => [...prev, {
+        type: "assistant",
+        content: text,
+        timestamp: new Date()
+      }]);
+
       analyzedImages.add(imageHash);
       setResponses(structuredResponses);
       
@@ -156,7 +169,7 @@ export const useImageAnalysis = () => {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [toast, isAnalyzing, retryTimeout, analyzedImages]);
+  }, [toast, isAnalyzing, retryTimeout, analyzedImages, conversationHistory]);
 
   // Create a debounced version of processImage
   const processImageData = useCallback(
@@ -169,6 +182,8 @@ export const useImageAnalysis = () => {
   return {
     responses,
     isAnalyzing,
-    processImageData
+    processImageData,
+    conversationHistory,
+    setConversationHistory
   };
 };
