@@ -10,7 +10,7 @@ interface Conversation {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
-  isVoiceInput?: boolean;
+  isVoiceInput?: boolean;  // Added this property as optional
 }
 
 const Index = () => {
