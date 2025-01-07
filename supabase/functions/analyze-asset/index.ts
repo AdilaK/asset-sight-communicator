@@ -14,24 +14,19 @@ serve(async (req) => {
 
   try {
     const { image, prompt } = await req.json()
-
-    if (!image) {
-      throw new Error('No image data provided')
-    }
-
     const apiKey = Deno.env.get('GEMINI_API_KEY')
+    
     if (!apiKey) {
       throw new Error('Gemini API key not configured')
     }
 
-    // Prepare the request to Gemini API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
+    console.log('Processing request with prompt:', prompt);
+    console.log('Image data received:', image ? 'Yes' : 'No');
+
+    let requestBody;
+    if (image) {
+      // For image analysis
+      requestBody = {
         contents: [{
           parts: [
             {
@@ -40,12 +35,34 @@ serve(async (req) => {
             {
               inline_data: {
                 mime_type: "image/jpeg",
-                data: image
+                data: image.split(',')[1] // Remove data URL prefix if present
               }
             }
           ]
         }]
-      })
+      };
+    } else {
+      // For text-only analysis
+      requestBody = {
+        contents: [{
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        }]
+      };
+    }
+
+    console.log('Sending request to Gemini API...');
+    
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify(requestBody)
     })
 
     if (!response.ok) {

@@ -17,10 +17,14 @@ const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const processImageData = async (imageData: ImageData) => {
-    if (isAnalyzing) return; // Prevent multiple simultaneous analyses
+    if (isAnalyzing) return;
 
     try {
       setIsAnalyzing(true);
+      toast({
+        title: "Processing",
+        description: "Analyzing the image...",
+      });
 
       // Convert ImageData to base64
       const canvas = document.createElement('canvas');
@@ -28,7 +32,14 @@ const Index = () => {
       canvas.height = imageData.height;
       const ctx = canvas.getContext('2d');
       ctx?.putImageData(imageData, 0, 0);
-      const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+      
+      // Get base64 with correct MIME type prefix
+      const base64Image = canvas.toDataURL('image/jpeg');
+
+      console.log('Sending image data to API...', {
+        imageSize: base64Image.length,
+        dimensions: `${imageData.width}x${imageData.height}`
+      });
 
       const response = await fetch('/functions/v1/analyze-asset', {
         method: 'POST',
@@ -42,16 +53,19 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Analysis failed: ${errorText}`);
       }
 
       const result = await response.json();
       console.log('Analysis result:', result);
 
-      // Parse the response from Gemini and structure it
-      const text = result.candidates[0]?.content?.parts[0]?.text || '';
-      
-      // Split the response into sections based on numbering
+      if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid response format from API');
+      }
+
+      const text = result.candidates[0].content.parts[0].text;
       const sections = text.split(/\d+\)/).filter(Boolean);
       
       const structuredResponses: Response[] = [
@@ -86,9 +100,10 @@ const Index = () => {
       console.error('Analysis error:', error);
       toast({
         title: "Analysis Failed",
-        description: "Unable to process the image",
+        description: error.message || "Unable to process the image",
         variant: "destructive",
       });
+      setResponses([]);
     } finally {
       setIsAnalyzing(false);
     }
@@ -113,8 +128,7 @@ const Index = () => {
       const result = await response.json();
       console.log('Text analysis result:', result);
 
-      // Structure the response
-      const text = result.candidates[0]?.content?.parts[0]?.text || '';
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
       
       const newResponse: Response = {
         type: "identification",
