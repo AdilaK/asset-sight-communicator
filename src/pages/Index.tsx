@@ -23,6 +23,7 @@ const Index = () => {
     try {
       setIsProcessing(true);
       
+      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
@@ -72,7 +73,16 @@ const Index = () => {
 
         // If this was a voice input, speak the response
         if (isVoiceInput) {
-          await speakText(assistantResponse);
+          try {
+            await speakText(assistantResponse);
+          } catch (error) {
+            console.error('Text-to-speech error:', error);
+            toast({
+              title: "Text-to-Speech Failed",
+              description: "Could not play audio response",
+              variant: "destructive",
+            });
+          }
         }
 
         toast({
@@ -133,7 +143,7 @@ const Index = () => {
                 </div>
               ))}
             </div>
-            <AnalysisInput onInput={handleInput} />
+            <AnalysisInput onInput={handleInput} isProcessing={isProcessing} />
           </div>
         </div>
 
