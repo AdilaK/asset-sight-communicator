@@ -27,9 +27,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
     try {
       // Create an image element to get the ImageData
       const img = new Image();
-      img.src = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(file);
       
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
@@ -38,33 +38,53 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
         if (ctx) {
           ctx.drawImage(img, 0, 0);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          onImageAnalysis(imageData);
+          
+          try {
+            // Upload to Supabase Storage
+            const timestamp = new Date().getTime();
+            const filePath = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            
+            const { error: uploadError, data } = await supabase.storage
+              .from('equipment_images')
+              .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              throw uploadError;
+            }
+
+            console.log('Upload successful:', data);
+            
+            // Process the image data for analysis
+            onImageAnalysis(imageData);
+            
+            toast({
+              title: "Image uploaded",
+              description: "Analyzing equipment...",
+            });
+          } catch (error: any) {
+            console.error('Upload error:', error);
+            toast({
+              title: "Upload failed",
+              description: error.message || "Failed to upload image",
+              variant: "destructive",
+            });
+          }
         }
         
-        URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(objectUrl);
       };
-
-      // Upload to Supabase Storage
-      const timestamp = new Date().getTime();
-      const filePath = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      const { error: uploadError } = await supabase.storage
-        .from('equipment_images')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      toast({
-        title: "Image uploaded",
-        description: "Analyzing equipment...",
-      });
+      img.src = objectUrl;
+      
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Image processing error:', error);
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload image",
+        title: "Processing failed",
+        description: error.message || "Failed to process image",
         variant: "destructive",
       });
     }
