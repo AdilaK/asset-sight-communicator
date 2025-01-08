@@ -29,16 +29,16 @@ serve(async (req) => {
     )
 
     if (image) {
-      systemPrompt = `You are a precise industrial equipment analyst. Provide ultra-concise analysis (max 15 words per section):
-      1) Type/Model - Core equipment specs only
-      2) Safety - Critical risks and required measures
-      3) Condition - Current state and urgent needs
-      4) Environmental - Key efficiency metrics`
+      systemPrompt = `Technical analyst. Ultra-brief analysis (max 8 words per section):
+      1) Type/Model - Core specs
+      2) Safety - Critical risks
+      3) Condition - State/needs
+      4) Environmental - Efficiency`
     } else if (lastImageAnalysis) {
-      systemPrompt = `As a technical equipment analyst, provide a single, focused response (max 20 words) addressing only the specific query about:
+      systemPrompt = `Technical response (max 10 words) about:
       "${lastImageAnalysis.content}"`
     } else {
-      systemPrompt = `Please upload equipment image for technical analysis. Voice or text queries require prior image analysis.`
+      systemPrompt = `Upload equipment image first. Queries require prior analysis.`
     }
 
     const messages = [];
@@ -82,10 +82,10 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.4,
-          topK: 16,
-          topP: 0.8,
-          maxOutputTokens: 150,
+          temperature: 0.3,
+          topK: 12,
+          topP: 0.7,
+          maxOutputTokens: 100,
         },
       })
     });
