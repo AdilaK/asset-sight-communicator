@@ -14,21 +14,18 @@ serve(async (req) => {
 
   try {
     const { text, voice } = await req.json()
+    console.log('Received text-to-speech request:', { textLength: text?.length, voice })
 
     if (!text) {
       throw new Error('Text is required')
     }
-
-    // Limit text length to 4000 characters
-    const truncatedText = text.length > 4000 
-      ? text.substring(0, 3997) + '...'
-      : text;
 
     // Initialize OpenAI
     const openai = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
 
+    console.log('Generating speech from text...')
     // Generate speech from text
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -38,7 +35,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: truncatedText,
+        input: text.substring(0, 4096), // OpenAI limit
         voice: voice || 'alloy',
         response_format: 'mp3',
       }),
@@ -46,9 +43,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json()
+      console.error('OpenAI API error:', error)
       throw new Error(error.error?.message || 'Failed to generate speech')
     }
 
+    console.log('Successfully generated speech, converting to base64...')
     // Convert audio buffer to base64
     const arrayBuffer = await response.arrayBuffer()
     const base64Audio = btoa(
@@ -62,6 +61,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Text-to-speech error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

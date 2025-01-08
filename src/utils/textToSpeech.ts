@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export const speakText = async (text: string): Promise<void> => {
   try {
     console.log("Starting text-to-speech conversion...");
@@ -13,33 +15,26 @@ export const speakText = async (text: string): Promise<void> => {
       ? text.substring(0, MAX_LENGTH - 3) + '...'
       : text;
 
-    const response = await fetch('https://oaetcqwattvzzuseqwfl.supabase.co/functions/v1/text-to-speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hZXRjcXdhdHR2enp1c2Vxd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYxNTUzOTksImV4cCI6MjA1MTczMTM5OX0.XKsBfu_F7B9v2RHF5WPxhmQ_t32awvR5vVYDPjJaSi8`,
-      },
-      body: JSON.stringify({
+    const { data, error } = await supabase.functions.invoke('text-to-speech', {
+      body: {
         text: truncatedText,
         voice: 'alloy'
-      }),
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Text-to-speech API error:', errorData);
-      throw new Error(errorData.error || 'Failed to generate speech');
+    if (error) {
+      console.error('Text-to-speech API error:', error);
+      throw error;
     }
 
-    const responseData = await response.json();
-    console.log("Audio response received, creating audio...");
-
-    if (!responseData.audioContent) {
+    if (!data?.audioContent) {
       throw new Error('No audio content received');
     }
 
+    console.log("Audio response received, creating audio...");
+
     // Convert base64 to audio and play it
-    const audioData = atob(responseData.audioContent);
+    const audioData = atob(data.audioContent);
     const arrayBuffer = new ArrayBuffer(audioData.length);
     const view = new Uint8Array(arrayBuffer);
     
