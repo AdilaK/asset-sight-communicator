@@ -6,6 +6,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { speakText } from "@/utils/textToSpeech";
+import { Camera, Shield, Tool, Leaf } from "lucide-react";
 
 interface Conversation {
   type: "user" | "assistant";
@@ -18,6 +19,29 @@ const Index = () => {
   const { responses, processImageData, conversationHistory, setConversationHistory } = useImageAnalysis();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const features = [
+    {
+      icon: <Camera className="w-4 h-4" />,
+      title: "Real-time Analysis",
+      description: "Instant equipment recognition and assessment through your device camera"
+    },
+    {
+      icon: <Shield className="w-4 h-4" />,
+      title: "Safety Scanner",
+      description: "Automatic detection of safety issues and compliance gaps"
+    },
+    {
+      icon: <Tool className="w-4 h-4" />,
+      title: "Condition Monitor",
+      description: "Identify wear patterns and maintenance needs early"
+    },
+    {
+      icon: <Leaf className="w-4 h-4" />,
+      title: "Environmental Check",
+      description: "Track emissions and identify sustainability opportunities"
+    }
+  ];
 
   const handleInput = useCallback(async (input: string, isVoiceInput: boolean = false) => {
     try {
@@ -110,6 +134,18 @@ const Index = () => {
           <h1 className="text-2xl font-bold text-center mb-6">
             Real-Time Asset Analysis
           </h1>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-secondary/50 p-3 rounded-lg text-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  {feature.icon}
+                  <h3 className="font-semibold">{feature.title}</h3>
+                </div>
+                <p className="text-xs opacity-80">{feature.description}</p>
+              </div>
+            ))}
+          </div>
           
           <div className="grid gap-4">
             <CameraView onFrame={processImageData} />
