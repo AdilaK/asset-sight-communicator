@@ -54,8 +54,8 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const getTitle = (type: Response["type"]) => {
     const titles = {
-      identification: "Asset Identification",
-      safety: "Asset Identification", // Changed from "Safety Check" to "Asset Identification"
+      identification: "",  // Removed "Asset Identification" for identification type
+      safety: "Asset Identification",
       condition: "Condition Assessment",
       environmental: "Environmental Impact"
     };
@@ -79,9 +79,11 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
           <div className="flex items-start gap-4">
             {getIcon(response.type, response.severity)}
             <div className="flex-1">
-              <h3 className="text-lg font-medium mb-3 text-gray-100">
-                {getTitle(response.type)}
-              </h3>
+              {getTitle(response.type) && (
+                <h3 className="text-lg font-medium mb-3 text-gray-100">
+                  {getTitle(response.type)}
+                </h3>
+              )}
               <div className="space-y-2 text-gray-300">
                 {formatContent(response.content)}
               </div>
