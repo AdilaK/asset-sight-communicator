@@ -26,25 +26,19 @@ serve(async (req) => {
 
     // Create a context-aware system prompt
     let systemPrompt = ''
-    const lastImageAnalysis = conversationHistory?.find(msg => 
-      msg.type === 'assistant' && msg.content.includes('Type and Model Identification')
-    )
-
     if (image) {
-      systemPrompt = `You are an expert industrial equipment analyst providing very concise analysis (max 30 words per section). 
-      Structure your response in these sections:
-      1) Type and model identification - Brief equipment details
-      2) Safety assessment - Key risks and measures
-      3) Condition evaluation - Current state and needs
-      4) Environmental impact - Key efficiency factors`
-    } else if (lastImageAnalysis) {
-      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
-      "${lastImageAnalysis.content}"
-      
-      Provide a very brief response (max 30 words) about the equipment, addressing the specific question or concern raised.`
+      systemPrompt = `You are an expert industrial equipment analyst. Provide an ultra-concise analysis (max 6 words per section) focusing on:
+
+1) Asset Identification: Type, model, key specs
+2) Safety Check: Risks, compliance issues, missing features
+3) Condition Assessment: Wear, damage, operational status
+4) Environmental Impact: Emissions, waste, sustainability
+
+Keep responses extremely brief but technically precise.`
+    } else if (prompt) {
+      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous conversation, provide a very concise, technical response (max 6 words) addressing the specific question or concern raised. Focus on actionable insights.`
     } else {
-      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
-      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
+      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. Please ask the user to share an image of the equipment they'd like to discuss.`
     }
 
     // Build the conversation context
@@ -94,10 +88,10 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.4, // Lower temperature for more focused responses
           topK: 32,
           topP: 1,
-          maxOutputTokens: 256, // Reduced to get shorter responses
+          maxOutputTokens: 150, // Reduced for shorter responses
         },
       })
     });
