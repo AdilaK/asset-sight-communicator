@@ -12,6 +12,7 @@ interface Conversation {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  isVoiceInput?: boolean;
 }
 
 export const useImageAnalysis = () => {
