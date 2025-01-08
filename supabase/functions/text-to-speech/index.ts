@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import OpenAI from 'https://esm.sh/openai@4.20.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import OpenAI from "https://esm.sh/openai@4.20.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +26,8 @@ serve(async (req) => {
     })
 
     console.log('Generating speech from text...')
-    // Generate speech from text
+    
+    // Generate speech from text - using a direct fetch to avoid potential recursion
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -48,11 +49,11 @@ serve(async (req) => {
     }
 
     console.log('Successfully generated speech, converting to base64...')
-    // Convert audio buffer to base64
+    
+    // Convert audio buffer to base64 without recursion
     const arrayBuffer = await response.arrayBuffer()
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    )
+    const uint8Array = new Uint8Array(arrayBuffer)
+    const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array))
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
