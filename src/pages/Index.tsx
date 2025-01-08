@@ -69,6 +69,7 @@ const Index = () => {
           isVoiceInput
         }]);
 
+        // Always speak the response if the input was from voice
         if (isVoiceInput) {
           try {
             console.log("Attempting to speak response:", assistantResponse);
