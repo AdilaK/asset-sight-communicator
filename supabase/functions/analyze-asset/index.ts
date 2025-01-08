@@ -27,16 +27,34 @@ serve(async (req) => {
     // Create a context-aware system prompt
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are an expert industrial equipment analyst. Provide an ultra-concise analysis (max 6 words per section) focusing on:
+      systemPrompt = `You are an expert industrial equipment analyst. Analyze the image and provide a detailed yet concise assessment in exactly these 4 sections:
 
-1) Asset Identification: Type, model, key specs
-2) Safety Check: Risks, compliance issues, missing features
-3) Condition Assessment: Wear, damage, operational status
-4) Environmental Impact: Emissions, waste, sustainability
+1) Asset Identification
+- Equipment type and model number (if visible)
+- Key specifications and features
+- Primary function and purpose
 
-Keep responses extremely brief but technically precise.`
+2) Safety Check
+- Visible safety risks or hazards
+- Missing safety features (guards, emergency stops)
+- Compliance concerns or violations
+- Required safety measures
+
+3) Condition Assessment
+- Signs of wear or damage
+- Maintenance needs
+- Operational status
+- Performance concerns
+
+4) Environmental Impact
+- Energy efficiency indicators
+- Emissions or waste concerns
+- Sustainability considerations
+- Environmental compliance status
+
+Keep each section focused and technical. Use bullet points for clarity. Highlight critical findings.`
     } else if (prompt) {
-      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous conversation, provide a very concise, technical response (max 6 words) addressing the specific question or concern raised. Focus on actionable insights.`
+      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous conversation, provide a technical response addressing the specific question about the equipment. Focus on actionable insights and safety considerations.`
     } else {
       systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. Please ask the user to share an image of the equipment they'd like to discuss.`
     }
@@ -88,10 +106,10 @@ Keep responses extremely brief but technically precise.`
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.4, // Lower temperature for more focused responses
+          temperature: 0.3, // Lower temperature for more technical and precise responses
           topK: 32,
           topP: 1,
-          maxOutputTokens: 150, // Reduced for shorter responses
+          maxOutputTokens: 1024, // Increased to accommodate detailed analysis
         },
       })
     });
