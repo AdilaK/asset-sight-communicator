@@ -23,6 +23,7 @@ const Index = () => {
     try {
       setIsProcessing(true);
       
+      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
@@ -62,6 +63,7 @@ const Index = () => {
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
         
+        // Add assistant response to conversation
         setConversationHistory(prev => [...prev, {
           type: "assistant",
           content: assistantResponse,
@@ -69,7 +71,7 @@ const Index = () => {
           isVoiceInput
         }]);
 
-        // Always speak the response if the input was from voice
+        // If the input was from voice, speak the response
         if (isVoiceInput) {
           try {
             console.log("Attempting to speak response:", assistantResponse);
