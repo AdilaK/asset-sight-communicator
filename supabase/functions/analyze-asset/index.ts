@@ -25,7 +25,7 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are a technical industrial equipment analyst. Analyze the image and provide a highly technical but concise assessment (STRICTLY under 50 words) in exactly these 4 sections:
+      systemPrompt = `You are a technical industrial equipment analyst. Analyze the image and provide a highly technical but concise assessment (max 50 words) in exactly these 4 sections:
 
 1) Asset Identification
 - Equipment type, model, specs (be specific with technical terms)
@@ -39,9 +39,9 @@ serve(async (req) => {
 4) Environmental Impact
 - Quantifiable environmental metrics and compliance status
 
-Format response in clear paragraphs. Use precise technical terminology. Be extremely concise but maintain technical depth. NEVER exceed 50 words per section.`
+Use precise technical terminology. Be extremely concise but maintain technical depth.`
     } else if (prompt) {
-      systemPrompt = `You are a technical industrial equipment analyst. Provide a highly technical response (STRICTLY under 50 words) using industry-standard terminology and precise technical specifications. Format in clear paragraphs. Focus on quantifiable metrics and technical parameters. Response MUST be under 50 words total.`
+      systemPrompt = `You are a technical industrial equipment analyst. Provide a highly technical response (max 50 words) using industry-standard terminology and precise technical specifications. Focus on quantifiable metrics and technical parameters.`
     } else {
       systemPrompt = `You are a technical industrial equipment analyst. Please request an equipment image for technical analysis.`
     }
@@ -88,10 +88,10 @@ Format response in clear paragraphs. Use precise technical terminology. Be extre
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.2, // Lower temperature for more precise technical responses
           topK: 32,
           topP: 1,
-          maxOutputTokens: 100, // Reduced to enforce brevity while maintaining technical depth
+          maxOutputTokens: 256, // Reduced to enforce brevity while maintaining technical depth
         },
       })
     })
@@ -104,32 +104,6 @@ Format response in clear paragraphs. Use precise technical terminology. Be extre
 
     const result = await response.json()
     console.log('Gemini API response:', result)
-
-    // Validate response length
-    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-      const text = result.candidates[0].content.parts[0].text;
-      const wordCount = text.split(/\s+/).length;
-      
-      if (wordCount > 50) {
-        console.warn(`Response exceeded 50 words (${wordCount} words). Truncating...`);
-        // Truncate to roughly 50 words while maintaining sentence structure
-        const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-        let truncatedText = '';
-        let currentWordCount = 0;
-        
-        for (const sentence of sentences) {
-          const sentenceWordCount = sentence.trim().split(/\s+/).length;
-          if (currentWordCount + sentenceWordCount <= 50) {
-            truncatedText += sentence;
-            currentWordCount += sentenceWordCount;
-          } else {
-            break;
-          }
-        }
-        
-        result.candidates[0].content.parts[0].text = truncatedText.trim();
-      }
-    }
 
     return new Response(
       JSON.stringify(result),
