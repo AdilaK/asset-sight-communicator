@@ -6,7 +6,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { speakText } from "@/utils/textToSpeech";
-import { Camera, Shield, Tool, Leaf } from "lucide-react";
+import { Camera, Shield, Wrench, Leaf } from "lucide-react";
 
 interface Conversation {
   type: "user" | "assistant";
@@ -32,7 +32,7 @@ const Index = () => {
       description: "Automatic detection of safety issues and compliance gaps"
     },
     {
-      icon: <Tool className="w-4 h-4" />,
+      icon: <Wrench className="w-4 h-4" />,
       title: "Condition Monitor",
       description: "Identify wear patterns and maintenance needs early"
     },
