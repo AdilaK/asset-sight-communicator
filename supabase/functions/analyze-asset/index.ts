@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -23,30 +24,39 @@ serve(async (req) => {
     console.log('Conversation history:', conversationHistory);
     console.log('Image data received:', image ? 'Yes' : 'No');
 
+    // Create a context-aware system prompt
     let systemPrompt = ''
     const lastImageAnalysis = conversationHistory?.find(msg => 
       msg.type === 'assistant' && msg.content.includes('Type and Model Identification')
     )
 
     if (image) {
-      systemPrompt = `Technical analyst. Ultra-brief analysis (max 8 words per section):
-      1) Type/Model - Core specs
-      2) Safety - Critical risks
-      3) Condition - State/needs
-      4) Environmental - Efficiency`
+      systemPrompt = `You are an expert industrial equipment analyst providing very concise analysis (max 30 words per section). 
+      Structure your response in these sections:
+      1) Type and model identification - Brief equipment details
+      2) Safety assessment - Key risks and measures
+      3) Condition evaluation - Current state and needs
+      4) Environmental impact - Key efficiency factors`
     } else if (lastImageAnalysis) {
-      systemPrompt = `Technical response (max 10 words) about:
-      "${lastImageAnalysis.content}"`
+      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
+      "${lastImageAnalysis.content}"
+      
+      Provide a very brief response (max 30 words) about the equipment, addressing the specific question or concern raised.`
     } else {
-      systemPrompt = `Upload equipment image first. Queries require prior analysis.`
+      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
+      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
     }
 
+    // Build the conversation context
     const messages = [];
+    
+    // Add system prompt
     messages.push({
       role: "user",
       parts: [{ text: systemPrompt }]
     });
 
+    // Add conversation history for context
     if (conversationHistory?.length) {
       conversationHistory.forEach(msg => {
         messages.push({
@@ -56,6 +66,7 @@ serve(async (req) => {
       });
     }
 
+    // Add current prompt/question
     if (prompt) {
       messages.push({
         role: "user",
@@ -63,6 +74,7 @@ serve(async (req) => {
       });
     }
 
+    // Add image if present
     if (image) {
       const currentMessage = messages[messages.length - 1];
       currentMessage.parts.push({
@@ -82,10 +94,10 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.3,
-          topK: 12,
-          topP: 0.7,
-          maxOutputTokens: 100,
+          temperature: 0.7,
+          topK: 32,
+          topP: 1,
+          maxOutputTokens: 256, // Reduced to get shorter responses
         },
       })
     });
