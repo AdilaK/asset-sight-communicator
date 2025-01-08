@@ -13,68 +13,77 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, image, conversationHistory } = await req.json()
+    const { image, prompt, conversationHistory } = await req.json()
     const apiKey = Deno.env.get('GEMINI_API_KEY')
-
+    
     if (!apiKey) {
-      throw new Error('Missing Gemini API key')
+      throw new Error('Gemini API key not configured')
     }
 
-    let messages = []
-    
+    console.log('Processing request with prompt:', prompt);
+    console.log('Conversation history:', conversationHistory);
+    console.log('Image data received:', image ? 'Yes' : 'No');
+
+    // Create a context-aware system prompt
+    let systemPrompt = ''
+    const lastImageAnalysis = conversationHistory?.find(msg => 
+      msg.type === 'assistant' && msg.content.includes('Type and Model Identification')
+    )
+
     if (image) {
-      // System prompt for image analysis
-      const systemPrompt = `You are a precise industrial equipment analyst. Provide ultra-concise analysis (max 6 words per section):
-      1) Type/Model - Key equipment identifiers
-      2) Safety - Critical risks only
-      3) Condition - Core maintenance needs
-      4) Impact - Essential environmental factors`
+      systemPrompt = `You are an expert industrial equipment analyst providing very concise analysis (max 30 words per section). 
+      Structure your response in these sections:
+      1) Type and model identification - Brief equipment details
+      2) Safety assessment - Key risks and measures
+      3) Condition evaluation - Current state and needs
+      4) Environmental impact - Key efficiency factors`
+    } else if (lastImageAnalysis) {
+      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
+      "${lastImageAnalysis.content}"
+      
+      Provide a very brief response (max 30 words) about the equipment, addressing the specific question or concern raised.`
+    } else {
+      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
+      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
+    }
 
-      messages = [{
-        role: "user",
-        parts: [
-          { text: systemPrompt },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: image.split(',')[1]
-            }
-          }
-        ]
-      }]
-    } else if (prompt) {
-      // System prompt for chat
-      const systemPrompt = `You are a technical equipment expert. Respond with:
-      - Maximum 6 words per point
-      - Only essential technical details
-      - Actionable insights
-      - No explanations or context`
+    // Build the conversation context
+    const messages = [];
+    
+    // Add system prompt
+    messages.push({
+      role: "user",
+      parts: [{ text: systemPrompt }]
+    });
 
-      messages = [
-        {
-          role: "user",
-          parts: [{ text: systemPrompt }]
-        }
-      ]
+    // Add conversation history for context
+    if (conversationHistory?.length) {
+      conversationHistory.forEach(msg => {
+        messages.push({
+          role: msg.type === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        });
+      });
+    }
 
-      // Add conversation history for context
-      if (conversationHistory) {
-        conversationHistory.forEach(msg => {
-          messages.push({
-            role: msg.type === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
-          })
-        })
-      }
-
-      // Add current prompt
+    // Add current prompt/question
+    if (prompt) {
       messages.push({
         role: "user",
         parts: [{ text: prompt }]
-      })
+      });
     }
 
-    console.log('Sending request to Gemini API with messages:', messages)
+    // Add image if present
+    if (image) {
+      const currentMessage = messages[messages.length - 1];
+      currentMessage.parts.push({
+        inline_data: {
+          mime_type: "image/jpeg",
+          data: image.split(',')[1]
+        }
+      });
+    }
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
       method: 'POST',
@@ -85,36 +94,44 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.3,
-          topK: 16,
-          topP: 0.8,
-          maxOutputTokens: 64,
+          temperature: 0.7,
+          topK: 32,
+          topP: 1,
+          maxOutputTokens: 256, // Reduced to get shorter responses
         },
       })
-    })
+    });
 
     if (!response.ok) {
-      const error = await response.text()
-      console.error('Gemini API error:', error)
-      throw new Error(`Gemini API error: ${error}`)
+      const error = await response.text();
+      console.error('Gemini API error:', error);
+      throw new Error(`Gemini API error: ${error}`);
     }
 
-    const result = await response.json()
-    console.log('Gemini API response:', result)
+    const result = await response.json();
+    console.log('Gemini API response:', result);
 
     return new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
 
   } catch (error) {
-    console.error('Error in analyze-asset function:', error)
+    console.error('Error in analyze-asset function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      {
+        status: error.status || 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
       }
-    )
+    );
   }
-})
+});
