@@ -15,21 +15,25 @@ export const speakText = async (text: string): Promise<void> => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Text-to-speech API error:', errorData);
-      throw new Error(errorData.error || 'Failed to generate speech');
+      throw new Error('Failed to generate speech');
     }
 
-    const data = await response.json();
+    const responseData = await response.json();
     console.log("Audio response received, creating audio...");
 
+    if (!responseData.audioContent) {
+      throw new Error('No audio content received');
+    }
+
     // Convert base64 to audio
-    const audioData = atob(data.audioContent);
+    const audioData = atob(responseData.audioContent);
     const arrayBuffer = new ArrayBuffer(audioData.length);
     const view = new Uint8Array(arrayBuffer);
+    
     for (let i = 0; i < audioData.length; i++) {
       view[i] = audioData.charCodeAt(i);
     }
+    
     const audioBlob = new Blob([arrayBuffer], { type: 'audio/mp3' });
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
