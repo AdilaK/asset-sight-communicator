@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -31,7 +32,7 @@ serve(async (req) => {
 
     if (image) {
       systemPrompt = `You are an expert industrial equipment analyst providing detailed, technical analysis. 
-      Structure your response in these sections:
+      Structure your response in these sections (keep each section brief and concise):
       1) Type and model identification - Include specific details about make, model, and key specifications
       2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
       3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
@@ -40,12 +41,10 @@ serve(async (req) => {
       systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
       "${lastImageAnalysis.content}"
       
-      Provide detailed, technical responses about the equipment shown in that image, focusing on maintenance, optimization, and troubleshooting.
-      If the user asks about aspects not visible in the image, acknowledge this limitation and suggest what additional information or images might be helpful.`
+      Provide a brief, focused response about the equipment shown in that image, addressing the specific question or concern raised.`
     } else {
       systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
-      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.
-      Explain that this will help provide more accurate and relevant assistance.`
+      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
     }
 
     // Build the conversation context
@@ -98,7 +97,7 @@ serve(async (req) => {
           temperature: 0.7,
           topK: 32,
           topP: 1,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 1024, // Reduced to get shorter responses
         },
       })
     });
@@ -106,25 +105,6 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.text();
       console.error('Gemini API error:', error);
-      
-      try {
-        const parsedError = JSON.parse(error);
-        if (parsedError.error?.code === 429) {
-          return new Response(
-            JSON.stringify({ 
-              error: "Rate limit exceeded. Please try again in a few minutes.",
-              retryAfter: 60
-            }),
-            { 
-              status: 429,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          );
-        }
-      } catch (e) {
-        throw new Error(`Gemini API error: ${error}`);
-      }
-      
       throw new Error(`Gemini API error: ${error}`);
     }
 
@@ -133,7 +113,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
 
   } catch (error) {
@@ -142,7 +127,10 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: error.status || 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
       }
     );
   }
