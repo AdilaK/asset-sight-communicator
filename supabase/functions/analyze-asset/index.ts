@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -24,39 +23,30 @@ serve(async (req) => {
     console.log('Conversation history:', conversationHistory);
     console.log('Image data received:', image ? 'Yes' : 'No');
 
-    // Create a context-aware system prompt
     let systemPrompt = ''
     const lastImageAnalysis = conversationHistory?.find(msg => 
       msg.type === 'assistant' && msg.content.includes('Type and Model Identification')
     )
 
     if (image) {
-      systemPrompt = `You are an expert industrial equipment analyst providing very concise analysis (max 30 words per section). 
-      Structure your response in these sections:
-      1) Type and model identification - Brief equipment details
-      2) Safety assessment - Key risks and measures
-      3) Condition evaluation - Current state and needs
-      4) Environmental impact - Key efficiency factors`
+      systemPrompt = `You are a precise industrial equipment analyst. Provide ultra-concise analysis (max 15 words per section):
+      1) Type/Model - Core equipment specs only
+      2) Safety - Critical risks and required measures
+      3) Condition - Current state and urgent needs
+      4) Environmental - Key efficiency metrics`
     } else if (lastImageAnalysis) {
-      systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
-      "${lastImageAnalysis.content}"
-      
-      Provide a very brief response (max 30 words) about the equipment, addressing the specific question or concern raised.`
+      systemPrompt = `As a technical equipment analyst, provide a single, focused response (max 20 words) addressing only the specific query about:
+      "${lastImageAnalysis.content}"`
     } else {
-      systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
-      Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
+      systemPrompt = `Please upload equipment image for technical analysis. Voice or text queries require prior image analysis.`
     }
 
-    // Build the conversation context
     const messages = [];
-    
-    // Add system prompt
     messages.push({
       role: "user",
       parts: [{ text: systemPrompt }]
     });
 
-    // Add conversation history for context
     if (conversationHistory?.length) {
       conversationHistory.forEach(msg => {
         messages.push({
@@ -66,7 +56,6 @@ serve(async (req) => {
       });
     }
 
-    // Add current prompt/question
     if (prompt) {
       messages.push({
         role: "user",
@@ -74,7 +63,6 @@ serve(async (req) => {
       });
     }
 
-    // Add image if present
     if (image) {
       const currentMessage = messages[messages.length - 1];
       currentMessage.parts.push({
@@ -94,10 +82,10 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.7,
-          topK: 32,
-          topP: 1,
-          maxOutputTokens: 256, // Reduced to get shorter responses
+          temperature: 0.4,
+          topK: 16,
+          topP: 0.8,
+          maxOutputTokens: 150,
         },
       })
     });
