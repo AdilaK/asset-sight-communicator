@@ -6,7 +6,7 @@ export const speakText = async (text: string): Promise<void> => {
   try {
     console.log("Starting text-to-speech conversion...");
     
-    // Fetch the API key from Supabase secrets using maybeSingle() instead of single()
+    // Fetch the API key from Supabase secrets
     const { data: secretData, error: secretError } = await supabase
       .from('secrets')
       .select('value')
@@ -14,13 +14,16 @@ export const speakText = async (text: string): Promise<void> => {
       .maybeSingle();
 
     if (secretError) {
+      console.error('Failed to fetch ElevenLabs API key:', secretError);
       throw new Error('Failed to fetch ElevenLabs API key');
     }
 
-    if (!secretData) {
+    if (!secretData?.value) {
+      console.error('ElevenLabs API key not found');
       throw new Error('ElevenLabs API key not found. Please add it to your secrets.');
     }
 
+    console.log("Making request to ElevenLabs API...");
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
       {
@@ -42,9 +45,11 @@ export const speakText = async (text: string): Promise<void> => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('ElevenLabs API error:', errorData);
       throw new Error(`Failed to generate speech: ${errorData.detail?.message || 'Unknown error'}`);
     }
 
+    console.log("Audio response received, creating blob...");
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);

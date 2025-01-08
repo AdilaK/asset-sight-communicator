@@ -74,6 +74,7 @@ const Index = () => {
         // If this was a voice input, speak the response
         if (isVoiceInput) {
           try {
+            console.log("Attempting to speak response:", assistantResponse);
             await speakText(assistantResponse);
           } catch (error) {
             console.error('Text-to-speech error:', error);
