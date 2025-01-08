@@ -3,22 +3,51 @@ import CameraView from "@/components/Camera";
 import ResponseDisplay from "@/components/ResponseDisplay";
 import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
-import Header from "@/components/Header";
-import FeatureGrid from "@/components/FeatureGrid";
-import ConversationHistory from "@/components/ConversationHistory";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { speakText } from "@/utils/textToSpeech";
+import { Camera, Shield, Wrench, Leaf } from "lucide-react";
+
+interface Conversation {
+  type: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  isVoiceInput?: boolean;
+}
 
 const Index = () => {
   const { responses, processImageData, conversationHistory, setConversationHistory } = useImageAnalysis();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const features = [
+    {
+      icon: <Camera className="w-4 h-4" />,
+      title: "Real-time Analysis",
+      description: "Instant equipment recognition and assessment through your device camera"
+    },
+    {
+      icon: <Shield className="w-4 h-4" />,
+      title: "Safety Scanner",
+      description: "Automatic detection of safety issues and compliance gaps"
+    },
+    {
+      icon: <Wrench className="w-4 h-4" />,
+      title: "Condition Monitor",
+      description: "Identify wear patterns and maintenance needs early"
+    },
+    {
+      icon: <Leaf className="w-4 h-4" />,
+      title: "Environmental Check",
+      description: "Track emissions and identify sustainability opportunities"
+    }
+  ];
+
   const handleInput = useCallback(async (input: string, isVoiceInput: boolean = false) => {
     try {
       setIsProcessing(true);
       
+      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
@@ -58,24 +87,28 @@ const Index = () => {
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
         
-        if (isVoiceInput) {
-          console.log("Voice input detected, starting immediate speech response");
-          speakText(assistantResponse).catch(error => {
-            console.error('Text-to-speech error:', error);
-            toast({
-              title: "Text-to-Speech Failed",
-              description: "Could not play audio response",
-              variant: "destructive",
-            });
-          });
-        }
-
+        // Add assistant response to conversation
         setConversationHistory(prev => [...prev, {
           type: "assistant",
           content: assistantResponse,
           timestamp: new Date(),
           isVoiceInput
         }]);
+
+        // If this was initiated by voice input, speak the response
+        if (isVoiceInput) {
+          console.log("Voice input detected, attempting to speak response");
+          try {
+            await speakText(assistantResponse);
+          } catch (error) {
+            console.error('Text-to-speech error:', error);
+            toast({
+              title: "Text-to-Speech Failed",
+              description: "Could not play audio response",
+              variant: "destructive",
+            });
+          }
+        }
 
         toast({
           title: "Response Received",
@@ -97,20 +130,68 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
       <div className="max-w-4xl mx-auto space-y-6">
-        <Header />
-        <FeatureGrid />
-        
-        <div className="grid gap-4">
-          <CameraView onFrame={processImageData} />
-          <div className="flex justify-center">
-            <span className="text-sm text-muted-foreground">or</span>
-          </div>
-          <ImageUpload onImageAnalysis={processImageData} />
-        </div>
-        
         <div className="space-y-4">
-          <ConversationHistory conversations={conversationHistory} />
-          <AnalysisInput onInput={handleInput} isProcessing={isProcessing} />
+          <div className="text-center space-y-3 py-8">
+            <div className="inline-block">
+              <div className="relative">
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/70 animate-fade-in">
+                  Asset<span className="text-success font-extrabold">Sight</span>
+                </h1>
+                <div className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-success/50 to-transparent"></div>
+              </div>
+              <p className="text-sm text-white/60 font-light mt-2 tracking-wide">
+                Intelligent equipment monitoring and assessment
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-secondary/50 p-3 rounded-lg text-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  {feature.icon}
+                  <h3 className="font-semibold">{feature.title}</h3>
+                </div>
+                <p className="text-xs opacity-80">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid gap-4">
+            <CameraView onFrame={processImageData} />
+            <div className="flex justify-center">
+              <span className="text-sm text-muted-foreground">or</span>
+            </div>
+            <ImageUpload onImageAnalysis={processImageData} />
+          </div>
+          
+          <div className="space-y-4">
+            <div className="bg-secondary/50 rounded-lg p-4 max-h-96 overflow-y-auto">
+              {conversationHistory.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 ${
+                    msg.type === "user" ? "text-right" : "text-left"
+                  }`}
+                >
+                  <div
+                    className={`inline-block max-w-[80%] rounded-lg p-3 ${
+                      msg.type === "user"
+                        ? "bg-success text-success-foreground ml-auto"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <span className="text-xs opacity-70 mt-1 block">
+                      {msg.timestamp.toLocaleTimeString()}
+                      {msg.isVoiceInput && " 🎤"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <AnalysisInput onInput={handleInput} isProcessing={isProcessing} />
+          </div>
         </div>
 
         <div className="mt-8">
