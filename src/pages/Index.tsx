@@ -15,39 +15,39 @@ interface Conversation {
   isVoiceInput?: boolean;
 }
 
+// Features configuration moved to a separate constant
+const FEATURES = [
+  {
+    icon: <Camera className="w-4 h-4" />,
+    title: "Real-time Analysis",
+    description: "Instant equipment recognition and assessment through your device camera"
+  },
+  {
+    icon: <Shield className="w-4 h-4" />,
+    title: "Safety Scanner",
+    description: "Automatic detection of safety issues and compliance gaps"
+  },
+  {
+    icon: <Wrench className="w-4 h-4" />,
+    title: "Condition Monitor",
+    description: "Identify wear patterns and maintenance needs early"
+  },
+  {
+    icon: <Leaf className="w-4 h-4" />,
+    title: "Environmental Check",
+    description: "Track emissions and identify sustainability opportunities"
+  }
+];
+
 const Index = () => {
   const { responses, processImageData, conversationHistory, setConversationHistory } = useImageAnalysis();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const features = [
-    {
-      icon: <Camera className="w-4 h-4" />,
-      title: "Real-time Analysis",
-      description: "Instant equipment recognition and assessment through your device camera"
-    },
-    {
-      icon: <Shield className="w-4 h-4" />,
-      title: "Safety Scanner",
-      description: "Automatic detection of safety issues and compliance gaps"
-    },
-    {
-      icon: <Wrench className="w-4 h-4" />,
-      title: "Condition Monitor",
-      description: "Identify wear patterns and maintenance needs early"
-    },
-    {
-      icon: <Leaf className="w-4 h-4" />,
-      title: "Environmental Check",
-      description: "Track emissions and identify sustainability opportunities"
-    }
-  ];
-
   const handleInput = useCallback(async (input: string, isVoiceInput: boolean = false) => {
     try {
       setIsProcessing(true);
       
-      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
@@ -87,28 +87,25 @@ const Index = () => {
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
         
-        // Add assistant response to conversation
-        setConversationHistory(prev => [...prev, {
-          type: "assistant",
-          content: assistantResponse,
-          timestamp: new Date(),
-          isVoiceInput
-        }]);
-
-        // If this was initiated by voice input, speak the response
+        // If this was initiated by voice input, start speaking immediately
         if (isVoiceInput) {
-          console.log("Voice input detected, attempting to speak response");
-          try {
-            await speakText(assistantResponse);
-          } catch (error) {
+          console.log("Voice input detected, starting immediate speech response");
+          speakText(assistantResponse).catch(error => {
             console.error('Text-to-speech error:', error);
             toast({
               title: "Text-to-Speech Failed",
               description: "Could not play audio response",
               variant: "destructive",
             });
-          }
+          });
         }
+
+        setConversationHistory(prev => [...prev, {
+          type: "assistant",
+          content: assistantResponse,
+          timestamp: new Date(),
+          isVoiceInput
+        }]);
 
         toast({
           title: "Response Received",
@@ -130,7 +127,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="space-y-4">
           <div className="text-center space-y-3 py-8">
             <div className="inline-block">
               <div className="relative">
@@ -144,19 +140,19 @@ const Index = () => {
               </p>
             </div>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-secondary/50 p-3 rounded-lg text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  {feature.icon}
-                  <h3 className="font-semibold">{feature.title}</h3>
-                </div>
-                <p className="text-xs opacity-80">{feature.description}</p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {FEATURES.map((feature, index) => (
+            <div key={index} className="bg-secondary/50 p-3 rounded-lg text-sm">
+              <div className="flex items-center gap-2 mb-1">
+                {feature.icon}
+                <h3 className="font-semibold">{feature.title}</h3>
               </div>
-            ))}
-          </div>
-          
+              <p className="text-xs opacity-80">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+        
           <div className="grid gap-4">
             <CameraView onFrame={processImageData} />
             <div className="flex justify-center">

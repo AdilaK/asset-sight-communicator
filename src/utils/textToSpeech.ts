@@ -1,39 +1,32 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export const speakText = async (text: string): Promise<void> => {
   try {
-    console.log("Starting text-to-speech conversion...");
+    // Start speaking immediately with browser's TTS while API call is processing
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
     
-    // Validate input
-    if (!text || text.trim().length === 0) {
-      throw new Error('Empty text provided');
-    }
-
-    // Truncate text if it exceeds maximum length
-    const MAX_LENGTH = 4000;
-    const truncatedText = text.length > MAX_LENGTH 
-      ? text.substring(0, MAX_LENGTH - 3) + '...'
-      : text;
-
+    console.log("Starting immediate browser TTS while processing high-quality version...");
+    
+    // Simultaneously process high-quality TTS
     const { data, error } = await supabase.functions.invoke('text-to-speech', {
       body: {
-        text: truncatedText,
+        text: text.substring(0, 4000), // Limit text length
         voice: 'alloy'
       }
     });
 
     if (error) {
       console.error('Text-to-speech API error:', error);
-      throw error;
+      return; // Browser TTS will continue
     }
 
     if (!data?.audioContent) {
-      throw new Error('No audio content received');
+      console.warn('No audio content received');
+      return; // Browser TTS will continue
     }
 
-    console.log("Audio response received, creating audio...");
-
-    // Convert base64 to audio and play it
+    // Once high-quality audio is ready, cancel browser TTS and play the better version
+    window.speechSynthesis.cancel();
+    
     const audioData = atob(data.audioContent);
     const arrayBuffer = new ArrayBuffer(audioData.length);
     const view = new Uint8Array(arrayBuffer);
@@ -60,6 +53,6 @@ export const speakText = async (text: string): Promise<void> => {
 
   } catch (error) {
     console.error("Text-to-speech error:", error);
-    throw error;
+    // If high-quality TTS fails, browser TTS will have already started
   }
 };
