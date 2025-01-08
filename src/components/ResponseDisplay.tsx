@@ -35,8 +35,8 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const formatContent = (content: string) => {
     return content.split(/(?:\r?\n|\r)/).map((line, i) => {
-      // Handle bullet points
-      const bulletPoint = line.trim().match(/^[-•]\s(.+)/);
+      // Handle bullet points and asterisks
+      const bulletPoint = line.trim().match(/^[-•*]\s(.+)/);
       if (bulletPoint) {
         return (
           <li key={i} className="ml-4 text-gray-200">
@@ -53,23 +53,24 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
   };
 
   const getTitle = (type: Response["type"]) => {
-    switch (type) {
-      case "identification":
-        return "Asset Identification";
-      case "safety":
-        return "Safety Check";
-      case "condition":
-        return "Condition Assessment";
-      case "environmental":
-        return "Environmental Impact";
-      default:
-        return type.charAt(0).toUpperCase() + type.slice(1);
-    }
+    const titles = {
+      identification: "Asset Identification",
+      safety: "Safety Check",
+      condition: "Condition Assessment",
+      environmental: "Environmental Impact"
+    };
+    return titles[type] || type;
   };
+
+  // Sort responses to ensure they appear in the correct order
+  const sortedResponses = [...responses].sort((a, b) => {
+    const order = ["identification", "safety", "condition", "environmental"];
+    return order.indexOf(a.type) - order.indexOf(b.type);
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {responses.map((response, index) => (
+      {sortedResponses.map((response, index) => (
         <div
           key={index}
           className={`p-6 rounded-lg ${getBackgroundColor(response.severity)} 
