@@ -1,7 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah's voice ID
-
 export const speakText = async (text: string): Promise<void> => {
   try {
     console.log("Starting text-to-speech conversion...");
@@ -10,43 +8,38 @@ export const speakText = async (text: string): Promise<void> => {
     const { data: secretData, error: secretError } = await supabase
       .from('secrets')
       .select('value')
-      .eq('name', 'ELEVEN_LABS_API_KEY')
+      .eq('name', 'OPENAI_API_KEY')
       .maybeSingle();
 
     if (secretError) {
-      console.error('Failed to fetch ElevenLabs API key:', secretError);
-      throw new Error('Failed to fetch ElevenLabs API key');
+      console.error('Failed to fetch OpenAI API key:', secretError);
+      throw new Error('Failed to fetch OpenAI API key');
     }
 
     if (!secretData?.value) {
-      console.error('ElevenLabs API key not found');
-      throw new Error('ElevenLabs API key not found. Please add it to your secrets.');
+      console.error('OpenAI API key not found');
+      throw new Error('OpenAI API key not found. Please add it to your secrets.');
     }
 
-    console.log("Making request to ElevenLabs API...");
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": secretData.value,
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
-        }),
-      }
-    );
+    console.log("Making request to OpenAI API...");
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secretData.value}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: text,
+        voice: 'alloy',
+        response_format: 'mp3',
+      }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('ElevenLabs API error:', errorData);
-      throw new Error(`Failed to generate speech: ${errorData.detail?.message || 'Unknown error'}`);
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`Failed to generate speech: ${errorData.error?.message || 'Unknown error'}`);
     }
 
     console.log("Audio response received, creating blob...");
