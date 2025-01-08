@@ -131,9 +131,14 @@ const Index = () => {
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-center mb-6">
-            Real-Time Asset Analysis
-          </h1>
+          <div className="text-center space-y-1">
+            <h1 className="text-3xl font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white/90 to-white/60">
+              Real-Time Asset Analysis
+            </h1>
+            <p className="text-sm text-white/60 font-light">
+              Intelligent equipment monitoring and assessment
+            </p>
+          </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {features.map((feature, index) => (
