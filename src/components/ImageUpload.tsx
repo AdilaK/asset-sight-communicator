@@ -98,8 +98,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
   return (
     <div className="flex items-center justify-center w-full">
       <Button 
-        variant="outline" 
-        className="gap-2"
+        variant="default"
+        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
         onClick={handleButtonClick}
       >
         <Upload className="w-4 h-4" />
