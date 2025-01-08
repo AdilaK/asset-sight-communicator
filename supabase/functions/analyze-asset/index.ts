@@ -31,17 +31,17 @@ serve(async (req) => {
     )
 
     if (image) {
-      systemPrompt = `You are an expert industrial equipment analyst providing detailed, technical analysis. 
-      Structure your response in these sections (keep each section brief and concise):
-      1) Type and model identification - Include specific details about make, model, and key specifications
-      2) Safety assessment - Evaluate current safety status, potential risks, and recommended safety measures
-      3) Condition evaluation - Assess current operational state, wear patterns, and maintenance needs
-      4) Environmental impact analysis - Consider energy efficiency, emissions, and sustainability aspects`
+      systemPrompt = `You are an expert industrial equipment analyst providing very concise analysis (max 30 words per section). 
+      Structure your response in these sections:
+      1) Type and model identification - Brief equipment details
+      2) Safety assessment - Key risks and measures
+      3) Condition evaluation - Current state and needs
+      4) Environmental impact - Key efficiency factors`
     } else if (lastImageAnalysis) {
       systemPrompt = `You are an expert industrial equipment analyst. Based on the previous image analysis:
       "${lastImageAnalysis.content}"
       
-      Provide a brief, focused response about the equipment shown in that image, addressing the specific question or concern raised.`
+      Provide a very brief response (max 30 words) about the equipment, addressing the specific question or concern raised.`
     } else {
       systemPrompt = `You are an expert industrial equipment analyst. However, I notice no equipment has been analyzed yet. 
       Please ask the user to share an image of the equipment they'd like to discuss, either by uploading a photo or using the camera feature.`
@@ -97,7 +97,7 @@ serve(async (req) => {
           temperature: 0.7,
           topK: 32,
           topP: 1,
-          maxOutputTokens: 1024, // Reduced to get shorter responses
+          maxOutputTokens: 256, // Reduced to get shorter responses
         },
       })
     });
