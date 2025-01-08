@@ -10,6 +10,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string>("");
+  const [videoDimensionsSet, setVideoDimensionsSet] = useState(false);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -20,7 +21,10 @@ const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
         
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setIsActive(true);
+          videoRef.current.onloadedmetadata = () => {
+            setVideoDimensionsSet(true);
+            setIsActive(true);
+          };
         }
       } catch (err) {
         setError("Camera access denied. Please check permissions.");
@@ -39,12 +43,12 @@ const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
   }, []);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || !videoDimensionsSet) return;
 
     const processFrame = () => {
       if (videoRef.current && canvasRef.current) {
-        const context = canvasRef.current.getContext("2d");
-        if (context) {
+        const context = canvasRef.current.getContext('2d');
+        if (context && videoRef.current.videoWidth > 0) {
           canvasRef.current.width = videoRef.current.videoWidth;
           canvasRef.current.height = videoRef.current.videoHeight;
           context.drawImage(videoRef.current, 0, 0);
@@ -61,7 +65,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onFrame }) => {
     };
 
     requestAnimationFrame(processFrame);
-  }, [isActive, onFrame]);
+  }, [isActive, videoDimensionsSet, onFrame]);
 
   if (error) {
     return (

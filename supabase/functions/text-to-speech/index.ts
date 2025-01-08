@@ -6,6 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Process base64 in chunks to prevent stack overflow
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const chunks: string[] = [];
+  const uint8Array = new Uint8Array(buffer);
+  const chunkSize = 32768; // Process in smaller chunks
+  
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.slice(i, i + chunkSize);
+    chunks.push(String.fromCharCode.apply(null, chunk));
+  }
+  
+  return btoa(chunks.join(''));
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -27,7 +41,7 @@ serve(async (req) => {
 
     console.log('Generating speech from text...')
     
-    // Generate speech from text - using a direct fetch to avoid potential recursion
+    // Generate speech from text
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -50,10 +64,9 @@ serve(async (req) => {
 
     console.log('Successfully generated speech, converting to base64...')
     
-    // Convert audio buffer to base64 without recursion
+    // Convert audio buffer to base64 using chunked processing
     const arrayBuffer = await response.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
-    const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array))
+    const base64Audio = arrayBufferToBase64(arrayBuffer)
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
