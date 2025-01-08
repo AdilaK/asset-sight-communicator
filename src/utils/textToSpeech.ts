@@ -1,16 +1,29 @@
-const ELEVEN_LABS_API_KEY = import.meta.env.VITE_ELEVEN_LABS_API_KEY;
+import { supabase } from "@/integrations/supabase/client";
+
 const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah's voice ID
 
 export const speakText = async (text: string): Promise<void> => {
   try {
     console.log("Starting text-to-speech conversion...");
+    
+    // Fetch the API key from Supabase secrets
+    const { data: secretData, error: secretError } = await supabase
+      .from('secrets')
+      .select('value')
+      .eq('name', 'ELEVEN_LABS_API_KEY')
+      .single();
+
+    if (secretError || !secretData) {
+      throw new Error('Failed to retrieve ElevenLabs API key');
+    }
+
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "xi-api-key": ELEVEN_LABS_API_KEY || "",
+          "xi-api-key": secretData.value,
         },
         body: JSON.stringify({
           text,
@@ -41,6 +54,6 @@ export const speakText = async (text: string): Promise<void> => {
     };
   } catch (error) {
     console.error("Text-to-speech error:", error);
-    throw error; // Re-throw to handle in the calling component
+    throw error;
   }
 };
