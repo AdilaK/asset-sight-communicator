@@ -128,7 +128,7 @@ const Index = () => {
   }, [toast, conversationHistory]);
 
   return (
-    <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6">
+    <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="space-y-4">
           <h1 className="text-2xl font-bold text-center mb-6">
