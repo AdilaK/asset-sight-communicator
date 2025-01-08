@@ -19,6 +19,11 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
 
+    // Limit text length to 4000 characters
+    const truncatedText = text.length > 4000 
+      ? text.substring(0, 3997) + '...'
+      : text;
+
     // Initialize OpenAI
     const openai = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
@@ -33,7 +38,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: text,
+        input: truncatedText,
         voice: voice || 'alloy',
         response_format: 'mp3',
       }),
