@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ClipboardCheck, IdCard, ShieldCheck, Leaf } from "lucide-react";
 
 interface Response {
   type: "identification" | "safety" | "condition" | "environmental";
@@ -17,7 +17,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
       return <AlertTriangle className="w-5 h-5 text-warning" />;
     }
     if (type === "identification") {
-      return <Info className="w-5 h-5 text-info" />;
+      return <IdCard className="w-5 h-5 text-info" />;
     }
     return <CheckCircle className="w-5 h-5 text-success" />;
   };
@@ -33,15 +33,31 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     }
   };
 
-  const formatContent = (content: string) => {
+  const getListIcon = (type: Response["type"]) => {
+    switch (type) {
+      case "identification":
+        return <IdCard className="w-4 h-4 text-gray-400" />;
+      case "safety":
+        return <ShieldCheck className="w-4 h-4 text-gray-400" />;
+      case "condition":
+        return <ClipboardCheck className="w-4 h-4 text-gray-400" />;
+      case "environmental":
+        return <Leaf className="w-4 h-4 text-gray-400" />;
+      default:
+        return <Info className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const formatContent = (content: string, type: Response["type"]) => {
     return content.split(/(?:\r?\n|\r)/).map((line, i) => {
       // Handle bullet points and asterisks
       const bulletPoint = line.trim().match(/^[-•*]\s(.+)/);
       if (bulletPoint) {
         return (
-          <li key={i} className="ml-4 text-gray-200">
-            {bulletPoint[1]}
-          </li>
+          <div key={i} className="flex items-center gap-2 ml-4 text-gray-200">
+            {getListIcon(type)}
+            <span>{bulletPoint[1]}</span>
+          </div>
         );
       }
       return (
@@ -54,7 +70,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const getTitle = (type: Response["type"]) => {
     const titles = {
-      identification: "Assessment",  // Changed from empty string to "Assessment"
+      identification: "Assessment",
       safety: "Asset Identification",
       condition: "Safety Check",
       environmental: "Environmental Impact"
@@ -85,7 +101,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
                 </h3>
               )}
               <div className="space-y-2 text-gray-300">
-                {formatContent(response.content)}
+                {formatContent(response.content, response.type)}
               </div>
             </div>
           </div>
