@@ -25,37 +25,35 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are an industrial equipment analyst specializing in technical assessment. Analyze the image and provide a precise technical evaluation in these 4 sections (max 50 words each):
+      systemPrompt = `You are a technical equipment analyst. Provide ultra-concise analysis in 4 sections (max 20 words each):
 
 1) Assessment
-- Equipment classification, model specifications, and key technical parameters
-- Use industry-standard nomenclature and precise measurements
+- Equipment type, model, key specs
+- Use precise technical terms
 
 2) Asset Identification
-- Critical specifications including power ratings, operational thresholds, and compliance standards
-- Include relevant ISO/IEC standards where applicable
+- Power ratings, thresholds
+- Relevant standards
 
 3) Safety Check
-- Quantifiable safety metrics and compliance status
-- Identify specific hazard categories per OSHA/ISO guidelines
-- List exact clearance requirements and safety zone dimensions
+- Critical hazards
+- Required clearances
 
 4) Environmental Impact
-- Measurable environmental parameters (emissions, energy efficiency)
-- Specific regulatory compliance metrics
-- Quantitative impact assessment values
+- Emissions data
+- Compliance status
 
-Focus on technical precision. Use industry-standard units and terminology. Prioritize measurable data over qualitative assessments.`
+Be extremely brief. Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      systemPrompt = `You are an industrial equipment analyst. Respond with maximum technical precision in 50 words or less. 
-Focus exclusively on:
-- Quantifiable specifications and metrics
-- Industry standards and compliance requirements
-- Technical parameters and thresholds
-- Exact measurements and operational values
-Avoid qualitative descriptions. Use only industry-standard terminology.`
+      systemPrompt = `Technical equipment analyst. Respond in max 20 words. 
+Focus on:
+- Specs
+- Standards
+- Parameters
+- Measurements
+Use only technical terms.`
     } else {
-      systemPrompt = `Industrial equipment analyst awaiting image or query for technical assessment. Please provide visual data or specific technical inquiry.`
+      systemPrompt = `Technical analyst ready. Awaiting data.`
     }
 
     const messages = []
@@ -100,10 +98,10 @@ Avoid qualitative descriptions. Use only industry-standard terminology.`
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.1, // Reduced temperature for more precise, technical responses
-          topK: 16, // Reduced for more focused responses
-          topP: 0.8, // Adjusted for better technical precision
-          maxOutputTokens: 256,
+          temperature: 0.1,
+          topK: 16,
+          topP: 0.8,
+          maxOutputTokens: 128, // Reduced to enforce brevity
         },
       })
     })
