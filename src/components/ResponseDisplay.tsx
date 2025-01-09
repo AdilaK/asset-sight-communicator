@@ -54,10 +54,10 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const getTitle = (type: Response["type"]) => {
     const titles = {
-      identification: "",  // Removed "Asset Identification" for identification type
+      identification: "Assessment",  // Changed from empty string to "Assessment"
       safety: "Asset Identification",
       condition: "Safety Check",
-      environmental: "Condition Assessment"
+      environmental: "Environmental Impact"
     };
     return titles[type] || type;
   };
