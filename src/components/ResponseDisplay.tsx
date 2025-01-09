@@ -54,17 +54,33 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const getTitle = (type: Response["type"]) => {
     const titles = {
-      identification: "",  // Removed "Asset Identification" for identification type
-      safety: "Asset Identification",
-      condition: "Safety Check",
-      environmental: "Condition Assessment"
+      identification: "Asset Identification",
+      safety: "Safety Check",
+      condition: "Condition Assessment",
+      environmental: "Environmental Impact"
     };
-    return titles[type] || type;
+    return titles[type];
   };
 
+  // Group responses by type
+  const groupedResponses = responses.reduce((acc, response) => {
+    if (response.type === "environmental") {
+      // Add environmental responses to condition assessment
+      const conditionResponse = acc.find(r => r.type === "condition");
+      if (conditionResponse) {
+        conditionResponse.content += "\n\nEnvironmental Impact:\n" + response.content;
+        if (response.severity === "warning" || response.severity === "critical") {
+          conditionResponse.severity = response.severity;
+        }
+      }
+      return acc;
+    }
+    return [...acc, response];
+  }, [] as Response[]);
+
   // Sort responses to ensure they appear in the correct order
-  const sortedResponses = [...responses].sort((a, b) => {
-    const order = ["identification", "safety", "condition", "environmental"];
+  const sortedResponses = groupedResponses.sort((a, b) => {
+    const order = ["identification", "safety", "condition"];
     return order.indexOf(a.type) - order.indexOf(b.type);
   });
 
@@ -79,11 +95,9 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
           <div className="flex items-start gap-4">
             {getIcon(response.type, response.severity)}
             <div className="flex-1">
-              {getTitle(response.type) && (
-                <h3 className="text-lg font-medium mb-3 text-gray-100">
-                  {getTitle(response.type)}
-                </h3>
-              )}
+              <h3 className="text-lg font-medium mb-3 text-gray-100">
+                {getTitle(response.type)}
+              </h3>
               <div className="space-y-2 text-gray-300">
                 {formatContent(response.content)}
               </div>
