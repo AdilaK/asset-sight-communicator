@@ -16,10 +16,18 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     if (severity === "warning" || severity === "critical") {
       return <AlertTriangle className="w-5 h-5 text-warning" />;
     }
-    if (type === "identification") {
-      return <IdCard className="w-5 h-5 text-info" />;
+    switch (type) {
+      case "identification":
+        return <IdCard className="w-5 h-5 text-info" />;
+      case "safety":
+        return <ShieldCheck className="w-5 h-5 text-success" />;
+      case "condition":
+        return <ClipboardCheck className="w-5 h-5 text-success" />;
+      case "environmental":
+        return <Leaf className="w-5 h-5 text-success" />;
+      default:
+        return <Info className="w-5 h-5 text-info" />;
     }
-    return <CheckCircle className="w-5 h-5 text-success" />;
   };
 
   const getBackgroundColor = (severity?: Response["severity"]) => {
@@ -33,31 +41,15 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     }
   };
 
-  const getListIcon = (type: Response["type"]) => {
-    switch (type) {
-      case "identification":
-        return <IdCard className="w-4 h-4 text-gray-400" />;
-      case "safety":
-        return <ShieldCheck className="w-4 h-4 text-gray-400" />;
-      case "condition":
-        return <ClipboardCheck className="w-4 h-4 text-gray-400" />;
-      case "environmental":
-        return <Leaf className="w-4 h-4 text-gray-400" />;
-      default:
-        return <Info className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const formatContent = (content: string, type: Response["type"]) => {
+  const formatContent = (content: string) => {
     return content.split(/(?:\r?\n|\r)/).map((line, i) => {
       // Handle bullet points and asterisks
       const bulletPoint = line.trim().match(/^[-•*]\s(.+)/);
       if (bulletPoint) {
         return (
-          <div key={i} className="flex items-center gap-2 ml-4 text-gray-200">
-            {getListIcon(type)}
-            <span>{bulletPoint[1]}</span>
-          </div>
+          <li key={i} className="ml-4 text-gray-200">
+            {bulletPoint[1]}
+          </li>
         );
       }
       return (
@@ -101,7 +93,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
                 </h3>
               )}
               <div className="space-y-2 text-gray-300">
-                {formatContent(response.content, response.type)}
+                {formatContent(response.content)}
               </div>
             </div>
           </div>
