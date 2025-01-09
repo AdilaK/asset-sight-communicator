@@ -19,6 +19,7 @@ const Index = () => {
   const { responses, processImageData, conversationHistory, setConversationHistory } = useImageAnalysis();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasInitialAnalysis, setHasInitialAnalysis] = useState(false);
 
   const features = [
     {
@@ -47,7 +48,6 @@ const Index = () => {
     try {
       setIsProcessing(true);
       
-      // Add user message to conversation
       setConversationHistory(prev => [...prev, {
         type: "user",
         content: input,
@@ -87,7 +87,6 @@ const Index = () => {
       if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
         const assistantResponse = result.candidates[0].content.parts[0].text;
         
-        // Add assistant response to conversation
         setConversationHistory(prev => [...prev, {
           type: "assistant",
           content: assistantResponse,
@@ -95,7 +94,6 @@ const Index = () => {
           isVoiceInput
         }]);
 
-        // If this was initiated by voice input, speak the response
         if (isVoiceInput) {
           console.log("Voice input detected, attempting to speak response");
           try {
@@ -126,6 +124,11 @@ const Index = () => {
       setIsProcessing(false);
     }
   }, [toast, conversationHistory]);
+
+  const handleImageAnalysis = useCallback((imageData: ImageData) => {
+    processImageData(imageData);
+    setHasInitialAnalysis(true);
+  }, [processImageData]);
 
   return (
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
@@ -158,11 +161,16 @@ const Index = () => {
           </div>
           
           <div className="grid gap-4">
-            <CameraView onFrame={processImageData} />
-            <div className="flex justify-center">
+            <CameraView onFrame={handleImageAnalysis} />
+            <div className="flex justify-center items-center gap-4">
               <span className="text-sm text-muted-foreground">or</span>
             </div>
-            <ImageUpload onImageAnalysis={processImageData} />
+            <div className="flex gap-4 justify-center">
+              <ImageUpload onImageAnalysis={handleImageAnalysis} />
+              {hasInitialAnalysis && (
+                <ImageUpload onImageAnalysis={handleImageAnalysis} isFollowUp={true} />
+              )}
+            </div>
           </div>
           
           <div className="space-y-4">

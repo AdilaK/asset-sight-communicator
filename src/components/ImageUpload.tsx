@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ImageUploadProps {
   onImageAnalysis: (imageData: ImageData) => void;
+  isFollowUp?: boolean;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis, isFollowUp }) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +31,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
     }
 
     try {
-      // Create an image element to get the ImageData
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
       
@@ -45,7 +45,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           
           try {
-            // Upload to Supabase Storage
             const timestamp = new Date().getTime();
             const filePath = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
             
@@ -63,12 +62,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
 
             console.log('Upload successful:', data);
             
-            // Process the image data for analysis
             onImageAnalysis(imageData);
             
             toast({
-              title: "Image uploaded",
-              description: "Analyzing equipment...",
+              title: isFollowUp ? "Follow-up image uploaded" : "Image uploaded",
+              description: isFollowUp ? "Continuing analysis..." : "Analyzing equipment...",
             });
           } catch (error: any) {
             console.error('Upload error:', error);
@@ -93,17 +91,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageAnalysis }) => {
         variant: "destructive",
       });
     }
-  }, [onImageAnalysis, toast]);
+  }, [onImageAnalysis, toast, isFollowUp]);
 
   return (
     <div className="flex items-center justify-center w-full">
       <Button 
-        variant="default"
-        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+        variant={isFollowUp ? "secondary" : "default"}
+        className={`gap-2 ${isFollowUp ? 'bg-secondary hover:bg-secondary/90' : 'bg-primary hover:bg-primary/90'} text-primary-foreground transition-colors`}
         onClick={handleButtonClick}
       >
         <Upload className="w-4 h-4" />
-        Upload Image
+        {isFollowUp ? 'Upload Follow-up Image' : 'Upload Image'}
       </Button>
       <input
         ref={fileInputRef}
