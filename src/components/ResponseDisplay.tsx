@@ -56,7 +56,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     const titles = {
       identification: "",  // Removed "Asset Identification" for identification type
       safety: "Asset Identification",
-      condition: "Condition Assessment",
+      condition: "Safety Check",
       environmental: "Environmental Impact"
     };
     return titles[type] || type;
