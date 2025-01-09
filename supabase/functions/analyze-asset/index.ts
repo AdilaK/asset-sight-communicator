@@ -26,31 +26,44 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      // Enhanced prompt for follow-up analysis
       const hasExistingAnalysis = conversationHistory && conversationHistory.length > 0
-      systemPrompt = `You are a technical equipment analyst. ${hasExistingAnalysis ? 'This is a follow-up analysis of the same equipment. Compare with previous observations and note any new details or changes.' : ''} Provide detailed technical analysis in 4 sections:
+      
+      // Enhanced prompt for better follow-up analysis
+      systemPrompt = `You are a technical equipment analyst. ${hasExistingAnalysis ? 'This is a follow-up analysis of the same equipment from a different angle or time. Your task is to compare with previous observations and highlight new findings.' : ''} 
+
+Provide a detailed technical analysis in 4 sections:
 
 1) Assessment
-- Equipment type, model, key specs
-- Use precise technical terms
-${hasExistingAnalysis ? '- Note any differences or additional details visible in this image' : ''}
+- Equipment identification and specifications
+${hasExistingAnalysis ? `- IMPORTANT: Compare with previous analysis and explicitly state:
+  * New visible features or components
+  * Different angles or perspectives providing new information
+  * Any changes in condition or status` : '- Identify key features and specifications'}
 
 2) Asset Identification
-- Power ratings, thresholds
-- Relevant standards
-${hasExistingAnalysis ? '- Compare with previous specifications if visible' : ''}
+- Technical specifications and standards
+${hasExistingAnalysis ? `- Compare with previous data:
+  * Confirm or update previous measurements
+  * Note any additional visible specifications
+  * Highlight any discrepancies or new findings` : '- Document all visible specifications'}
 
 3) Safety Check
-- Critical hazards
-- Required clearances
-${hasExistingAnalysis ? '- Highlight any new safety concerns' : ''}
+- Hazard assessment and safety requirements
+${hasExistingAnalysis ? `- Update safety analysis:
+  * New safety concerns from this angle
+  * Changes in condition affecting safety
+  * Additional hazards not visible in previous images` : '- Identify all safety concerns'}
 
 4) Environmental Impact
-- Emissions data
-- Compliance status
-${hasExistingAnalysis ? '- Note any environmental factors not visible in previous images' : ''}
+- Environmental considerations and compliance
+${hasExistingAnalysis ? `- Compare environmental factors:
+  * New environmental impacts visible
+  * Changes in compliance status
+  * Additional environmental considerations` : '- Assess environmental impact'}
 
-Use only technical terms. Focus on measurable data. ${hasExistingAnalysis ? 'Emphasize new information and changes from previous analysis.' : ''}`
+${hasExistingAnalysis ? 'CRITICAL: Your response must explicitly reference previous observations and clearly indicate what is new or different in this image. Use phrases like "In this new image..." or "Unlike the previous view..."' : 'Provide a comprehensive initial analysis.'}
+
+Use technical terminology and focus on measurable data.`
     } else if (prompt) {
       systemPrompt = `You are a technical equipment specialist. Your role is to:
 
