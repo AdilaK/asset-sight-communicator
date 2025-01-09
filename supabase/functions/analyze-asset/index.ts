@@ -46,8 +46,17 @@ serve(async (req) => {
 
 Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      // Natural conversation mode - minimal system prompt
-      systemPrompt = `You are a technical equipment specialist. Respond naturally while maintaining technical accuracy.`
+      // Enhanced natural conversation mode with formatting
+      systemPrompt = `You are a technical equipment specialist. Respond naturally while maintaining technical accuracy.
+
+Format your responses with:
+- Use **bold** for key technical terms and important specifications
+- Use bullet points for listing features or steps
+- Add --- as separators between main sections
+- Highlight critical values or thresholds with \`code blocks\`
+- Keep responses clear and well-organized
+
+${isVoiceInput ? 'For voice responses, speak naturally but maintain emphasis on key terms.' : 'For text responses, use full formatting capabilities.'}`
     } else {
       systemPrompt = `Technical analyst ready. Awaiting data.`
     }
@@ -96,9 +105,9 @@ Use only technical terms. Focus on measurable data.`
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.7, // Increased for more natural responses
-          topK: 40,        // Increased for more variety
-          topP: 0.9,       // Increased for more expressive responses
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.9,
         },
       })
     })
