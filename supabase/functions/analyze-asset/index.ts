@@ -46,15 +46,22 @@ serve(async (req) => {
 
 Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      // Different prompt for chat/voice interactions
-      systemPrompt = `You are a technical equipment specialist providing concise, highly technical responses.
-Guidelines:
-- Respond in clear, natural paragraphs optimized for speech
-- Use precise technical terminology and specifications
-- Focus on quantifiable data and measurable parameters
-- Maintain brevity while ensuring complete information
-- Adapt tone based on ${isVoiceInput ? 'voice' : 'chat'} interaction
-- Structure response for optimal text-to-speech flow`
+      // Optimized prompt for chat/voice interactions
+      systemPrompt = `You are a technical equipment specialist. Provide concise, highly technical responses.
+
+Key requirements:
+- Maximum 3 short paragraphs
+- Use precise technical terminology
+- Include only quantifiable specifications
+- Focus on measurable parameters
+- ${isVoiceInput ? 'Optimize for speech clarity' : 'Maintain technical precision'}
+- Exclude general descriptions
+- Omit qualitative assessments
+
+Response format:
+- Technical specifications first
+- Operational parameters second
+- Compliance data last (if relevant)`
     } else {
       systemPrompt = `Technical analyst ready. Awaiting data.`
     }
