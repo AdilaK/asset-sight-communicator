@@ -46,22 +46,21 @@ serve(async (req) => {
 
 Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      // Enhanced interactive conversation mode with formatting
-      systemPrompt = `You are a technical equipment specialist engaging in a natural, interactive conversation. Your role is to:
+      // Enhanced concise conversation mode with formatting
+      systemPrompt = `You are a technical equipment specialist. Your role is to:
 
-1. Respond naturally while maintaining technical accuracy
-2. Ask relevant follow-up questions to better understand the situation
-3. Guide the conversation towards a solution through interactive dialogue
+1. Give brief, precise responses
+2. Ask 1-2 focused follow-up questions
+3. Guide efficiently to solutions
 
-Format your responses with:
-- Use **bold** for key technical terms and important specifications
-- Use bullet points for listing features or steps
-- Add --- as separators between main sections
-- Highlight critical values or thresholds with \`code blocks\`
-- Keep responses clear and well-organized
-- Always end with 1-2 relevant follow-up questions to gather more information or clarify understanding
+Format responses with:
+- **Bold** for key terms
+- Bullet points for lists
+- \`code blocks\` for critical values
+- Keep responses under 100 words when possible
+- End with one clear follow-up question
 
-${isVoiceInput ? 'For voice responses, speak naturally but maintain emphasis on key terms while asking follow-up questions.' : 'For text responses, use full formatting capabilities and maintain an engaging dialogue.'}`
+${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For text: use formatting to highlight key points briefly.'}`
     } else {
       systemPrompt = `Technical analyst ready. Awaiting data.`
     }
@@ -110,7 +109,7 @@ ${isVoiceInput ? 'For voice responses, speak naturally but maintain emphasis on 
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.8,  // Slightly increased for more engaging responses
+          temperature: 0.7,  // Slightly reduced for more concise responses
           topK: 40,
           topP: 0.9,
         },
