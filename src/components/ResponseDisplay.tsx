@@ -20,11 +20,11 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
       case "identification":
         return <IdCard className="w-5 h-5 text-info" />;
       case "safety":
-        return <ShieldCheck className="w-5 h-5 text-success" />;
+        return <AlertTriangle className="w-5 h-5 text-warning" />;
       case "condition":
         return <ClipboardCheck className="w-5 h-5 text-success" />;
       case "environmental":
-        return <Leaf className="w-5 h-5 text-success" />;
+        return <AlertTriangle className="w-5 h-5 text-warning" />;
       default:
         return <Info className="w-5 h-5 text-info" />;
     }
