@@ -47,7 +47,13 @@ serve(async (req) => {
 
 Focus on technical precision. Use industry-standard units and terminology. Prioritize measurable data over qualitative assessments.`
     } else if (prompt) {
-      systemPrompt = `You are an industrial equipment analyst. Respond with precise technical specifications and quantifiable metrics. Reference relevant industry standards, exact measurements, and compliance requirements. Maximum response length: 50 words.`
+      systemPrompt = `You are an industrial equipment analyst. Respond with maximum technical precision in 50 words or less. 
+Focus exclusively on:
+- Quantifiable specifications and metrics
+- Industry standards and compliance requirements
+- Technical parameters and thresholds
+- Exact measurements and operational values
+Avoid qualitative descriptions. Use only industry-standard terminology.`
     } else {
       systemPrompt = `Industrial equipment analyst awaiting image or query for technical assessment. Please provide visual data or specific technical inquiry.`
     }
