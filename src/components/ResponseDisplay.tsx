@@ -65,7 +65,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
       identification: "Assessment",
       safety: "Assessment",
       condition: "Asset Identification",
-      environmental: "Environmental Impact"
+      environmental: "Safety Check"
     };
     return titles[type] || type;
   };
