@@ -35,7 +35,6 @@ export const useImageAnalysis = () => {
   const processImage = useCallback(async (imageData: ImageData, isFromCamera: boolean = false) => {
     if (isAnalyzing) return;
 
-    // For camera frames, implement rate limiting
     if (isFromCamera) {
       const currentTime = Date.now();
       const timeSinceLastProcess = currentTime - lastProcessedTime.current;
@@ -94,29 +93,36 @@ export const useImageAnalysis = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 429) {
-          const retryAfter = errorData.retryAfter || 60;
-          
-          if (retryTimeoutRef.current) {
-            clearTimeout(retryTimeoutRef.current);
+        const errorData = await response.text();
+        try {
+          const parsedError = JSON.parse(errorData);
+          if (response.status === 429) {
+            const retryAfter = parsedError.retryAfter || 60;
+            
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current);
+            }
+            
+            retryTimeoutRef.current = setTimeout(() => {
+              processImage(imageData, isFromCamera);
+            }, retryAfter * 1000);
+            
+            toast({
+              title: "Rate Limit Exceeded",
+              description: `Analysis will automatically retry in ${retryAfter} seconds...`,
+              duration: retryAfter * 1000,
+            });
+            return;
           }
-          
-          retryTimeoutRef.current = setTimeout(() => {
-            processImage(imageData, isFromCamera);
-          }, retryAfter * 1000);
-          
-          toast({
-            title: "Rate Limit Exceeded",
-            description: `Analysis will automatically retry in ${retryAfter} seconds...`,
-            duration: retryAfter * 1000,
-          });
-          return;
+          throw new Error(parsedError.error || 'Analysis failed');
+        } catch {
+          throw new Error(errorData || 'Analysis failed');
         }
-        throw new Error(errorData.error || 'Analysis failed');
       }
 
-      const result = await response.json();
+      // Clone the response before reading it
+      const responseClone = response.clone();
+      const result = await responseClone.json();
       console.log('Analysis result:', result);
 
       if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
