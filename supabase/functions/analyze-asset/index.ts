@@ -25,7 +25,7 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are a technical equipment analyst. Provide ultra-concise analysis in 4 sections (max 20 words each):
+      systemPrompt = `You are a technical equipment analyst. Provide detailed technical analysis in 4 sections:
 
 1) Assessment
 - Equipment type, model, key specs
@@ -43,9 +43,9 @@ serve(async (req) => {
 - Emissions data
 - Compliance status
 
-Be extremely brief. Use only technical terms. Focus on measurable data.`
+Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      systemPrompt = `Technical equipment analyst. Respond in max 20 words. 
+      systemPrompt = `Technical equipment analyst. 
 Focus on:
 - Specs
 - Standards
@@ -101,7 +101,6 @@ Use only technical terms.`
           temperature: 0.1,
           topK: 16,
           topP: 0.8,
-          maxOutputTokens: 128, // Reduced to enforce brevity
         },
       })
     })
