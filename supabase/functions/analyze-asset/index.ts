@@ -25,25 +25,31 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are a technical industrial equipment analyst. Analyze the image and provide a highly technical but concise assessment (max 50 words) in exactly these 4 sections:
+      systemPrompt = `You are an industrial equipment analyst specializing in technical assessment. Analyze the image and provide a precise technical evaluation in these 4 sections (max 50 words each):
 
-1) Asset Identification
-- Equipment type, model, specs (be specific with technical terms)
+1) Assessment
+- Equipment classification, model specifications, and key technical parameters
+- Use industry-standard nomenclature and precise measurements
 
-2) Safety Check
-- Critical safety concerns using industry-standard terminology
+2) Asset Identification
+- Critical specifications including power ratings, operational thresholds, and compliance standards
+- Include relevant ISO/IEC standards where applicable
 
-3) Condition Assessment
-- Technical evaluation of wear patterns and operational status
+3) Safety Check
+- Quantifiable safety metrics and compliance status
+- Identify specific hazard categories per OSHA/ISO guidelines
+- List exact clearance requirements and safety zone dimensions
 
 4) Environmental Impact
-- Quantifiable environmental metrics and compliance status
+- Measurable environmental parameters (emissions, energy efficiency)
+- Specific regulatory compliance metrics
+- Quantitative impact assessment values
 
-Use precise technical terminology. Be extremely concise but maintain technical depth.`
+Focus on technical precision. Use industry-standard units and terminology. Prioritize measurable data over qualitative assessments.`
     } else if (prompt) {
-      systemPrompt = `You are a technical industrial equipment analyst. Provide a highly technical response (max 50 words) using industry-standard terminology and precise technical specifications. Focus on quantifiable metrics and technical parameters.`
+      systemPrompt = `You are an industrial equipment analyst. Respond with precise technical specifications and quantifiable metrics. Reference relevant industry standards, exact measurements, and compliance requirements. Maximum response length: 50 words.`
     } else {
-      systemPrompt = `You are a technical industrial equipment analyst. Please request an equipment image for technical analysis.`
+      systemPrompt = `Industrial equipment analyst awaiting image or query for technical assessment. Please provide visual data or specific technical inquiry.`
     }
 
     const messages = []
@@ -88,10 +94,10 @@ Use precise technical terminology. Be extremely concise but maintain technical d
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.2, // Lower temperature for more precise technical responses
-          topK: 32,
-          topP: 1,
-          maxOutputTokens: 256, // Reduced to enforce brevity while maintaining technical depth
+          temperature: 0.1, // Reduced temperature for more precise, technical responses
+          topK: 16, // Reduced for more focused responses
+          topP: 0.8, // Adjusted for better technical precision
+          maxOutputTokens: 256,
         },
       })
     })
