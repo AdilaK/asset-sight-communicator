@@ -26,27 +26,32 @@ serve(async (req) => {
 
     let systemPrompt = ''
     if (image) {
-      systemPrompt = `You are a technical equipment analyst. Provide detailed technical analysis in 4 sections:
+      // Enhanced prompt for follow-up analysis
+      const hasExistingAnalysis = conversationHistory && conversationHistory.length > 0
+      systemPrompt = `You are a technical equipment analyst. ${hasExistingAnalysis ? 'This is a follow-up analysis of the same equipment. Compare with previous observations and note any new details or changes.' : ''} Provide detailed technical analysis in 4 sections:
 
 1) Assessment
 - Equipment type, model, key specs
 - Use precise technical terms
+${hasExistingAnalysis ? '- Note any differences or additional details visible in this image' : ''}
 
 2) Asset Identification
 - Power ratings, thresholds
 - Relevant standards
+${hasExistingAnalysis ? '- Compare with previous specifications if visible' : ''}
 
 3) Safety Check
 - Critical hazards
 - Required clearances
+${hasExistingAnalysis ? '- Highlight any new safety concerns' : ''}
 
 4) Environmental Impact
 - Emissions data
 - Compliance status
+${hasExistingAnalysis ? '- Note any environmental factors not visible in previous images' : ''}
 
-Use only technical terms. Focus on measurable data.`
+Use only technical terms. Focus on measurable data. ${hasExistingAnalysis ? 'Emphasize new information and changes from previous analysis.' : ''}`
     } else if (prompt) {
-      // Enhanced concise conversation mode with formatting
       systemPrompt = `You are a technical equipment specialist. Your role is to:
 
 1. Give brief, precise responses
@@ -73,7 +78,9 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
     })
 
     if (conversationHistory?.length) {
-      conversationHistory.forEach(msg => {
+      // Include only the last 5 messages to maintain context without exceeding token limits
+      const recentHistory = conversationHistory.slice(-5)
+      recentHistory.forEach(msg => {
         messages.push({
           role: msg.type === 'user' ? 'user' : 'model',
           parts: [{ text: msg.content }]
@@ -109,9 +116,10 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.7,  // Slightly reduced for more concise responses
+          temperature: 0.7,
           topK: 40,
           topP: 0.9,
+          maxOutputTokens: 2048,
         },
       })
     })
@@ -124,6 +132,12 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
 
     const result = await response.json()
     console.log('Gemini API response:', result)
+
+    // Validate the response format
+    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error('Invalid response format:', result)
+      throw new Error('Invalid or empty response from Gemini API')
+    }
 
     return new Response(
       JSON.stringify(result),
