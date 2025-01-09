@@ -20,50 +20,61 @@ serve(async (req) => {
     }
 
     console.log('Processing request with prompt:', prompt)
-    console.log('Conversation history:', conversationHistory)
+    console.log('Conversation history length:', conversationHistory?.length || 0)
     console.log('Image data received:', image ? 'Yes' : 'No')
-    console.log('Is voice input:', isVoiceInput)
 
     let systemPrompt = ''
     if (image) {
       const hasExistingAnalysis = conversationHistory && conversationHistory.length > 0
+      const previousAnalysis = hasExistingAnalysis ? 
+        conversationHistory[conversationHistory.length - 2]?.content || '' : '';
       
-      // Enhanced prompt for better follow-up analysis
-      systemPrompt = `You are a technical equipment analyst. ${hasExistingAnalysis ? 'This is a follow-up analysis of the same equipment from a different angle or time. Your task is to compare with previous observations and highlight new findings.' : ''} 
+      systemPrompt = `You are a technical equipment analyst. ${hasExistingAnalysis ? 
+        'This is a follow-up analysis of the same equipment. Compare with the previous analysis and highlight new findings.' : 
+        'Provide an initial detailed analysis.'} 
 
-Provide a detailed technical analysis in 4 sections:
+Analyze the equipment in these 4 sections:
 
 1) Assessment
 - Equipment identification and specifications
-${hasExistingAnalysis ? `- IMPORTANT: Compare with previous analysis and explicitly state:
+${hasExistingAnalysis ? `- Compare with previous analysis:
   * New visible features or components
-  * Different angles or perspectives providing new information
-  * Any changes in condition or status` : '- Identify key features and specifications'}
+  * Different angles showing new details
+  * Changes in condition or status
+  * Confirm or update previous observations` : '- Identify key features and specifications'}
 
 2) Asset Identification
 - Technical specifications and standards
 ${hasExistingAnalysis ? `- Compare with previous data:
-  * Confirm or update previous measurements
-  * Note any additional visible specifications
-  * Highlight any discrepancies or new findings` : '- Document all visible specifications'}
+  * New visible specifications
+  * Additional components or features
+  * Confirmation or updates to previous measurements
+  * Any discrepancies found` : '- Document all visible specifications'}
 
 3) Safety Check
 - Hazard assessment and safety requirements
 ${hasExistingAnalysis ? `- Update safety analysis:
   * New safety concerns from this angle
   * Changes in condition affecting safety
-  * Additional hazards not visible in previous images` : '- Identify all safety concerns'}
+  * Additional hazards not previously visible
+  * Confirmation of previous safety issues` : '- Identify all safety concerns'}
 
 4) Environmental Impact
 - Environmental considerations and compliance
 ${hasExistingAnalysis ? `- Compare environmental factors:
   * New environmental impacts visible
   * Changes in compliance status
-  * Additional environmental considerations` : '- Assess environmental impact'}
+  * Additional environmental considerations
+  * Updates to previous environmental observations` : '- Assess environmental impact'}
 
-${hasExistingAnalysis ? 'CRITICAL: Your response must explicitly reference previous observations and clearly indicate what is new or different in this image. Use phrases like "In this new image..." or "Unlike the previous view..."' : 'Provide a comprehensive initial analysis.'}
+${hasExistingAnalysis ? 
+`Previous Analysis Summary:
+${previousAnalysis}
 
-Use technical terminology and focus on measurable data.`
+CRITICAL: Your response must explicitly reference the previous analysis and clearly indicate what is new or different in this image. Use phrases like "In this new angle..." or "This view reveals..." and make direct comparisons.` : 
+'Provide a comprehensive initial analysis.'}
+
+Use technical terminology and focus on measurable data. Be specific about what you observe.`
     } else if (prompt) {
       systemPrompt = `You are a technical equipment specialist. Your role is to:
 
@@ -91,8 +102,8 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
     })
 
     if (conversationHistory?.length) {
-      // Include only the last 5 messages to maintain context without exceeding token limits
-      const recentHistory = conversationHistory.slice(-5)
+      // Include relevant context from conversation history
+      const recentHistory = conversationHistory.slice(-4)
       recentHistory.forEach(msg => {
         messages.push({
           role: msg.type === 'user' ? 'user' : 'model',
@@ -118,7 +129,7 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
       })
     }
 
-    console.log('Sending request to Gemini API with messages:', messages)
+    console.log('Sending request to Gemini API with message count:', messages.length)
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
       method: 'POST',
@@ -144,9 +155,8 @@ ${isVoiceInput ? 'For voice: be concise while emphasizing key terms.' : 'For tex
     }
 
     const result = await response.json()
-    console.log('Gemini API response:', result)
+    console.log('Gemini API response received')
 
-    // Validate the response format
     if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
       console.error('Invalid response format:', result)
       throw new Error('Invalid or empty response from Gemini API')
