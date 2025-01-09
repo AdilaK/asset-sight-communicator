@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, Minus } from "lucide-react";
 
 interface Response {
   type: "identification" | "safety" | "condition" | "environmental";
@@ -35,13 +35,17 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const formatContent = (content: string) => {
     return content.split(/(?:\r?\n|\r)/).map((line, i) => {
-      // Handle bullet points and asterisks
+      // Handle bullet points, asterisks and numbered lists
       const bulletPoint = line.trim().match(/^[-•*]\s(.+)/);
-      if (bulletPoint) {
+      const numberedPoint = line.trim().match(/^\d+\.\s(.+)/);
+      
+      if (bulletPoint || numberedPoint) {
+        const text = (bulletPoint?.[1] || numberedPoint?.[1]) as string;
         return (
-          <li key={i} className="ml-4 text-gray-200">
-            {bulletPoint[1]}
-          </li>
+          <div key={i} className="flex items-center gap-2 ml-4 text-gray-200">
+            <Minus className="w-4 h-4 text-gray-400" />
+            <span>{text}</span>
+          </div>
         );
       }
       return (
@@ -54,7 +58,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
 
   const getTitle = (type: Response["type"]) => {
     const titles = {
-      identification: "Assessment",  // Changed from empty string to "Assessment"
+      identification: "Assessment",
       safety: "Asset Identification",
       condition: "Safety Check",
       environmental: "Environmental Impact"
