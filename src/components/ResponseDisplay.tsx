@@ -57,7 +57,7 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
       identification: "",  // Removed "Asset Identification" for identification type
       safety: "Asset Identification",
       condition: "Safety Check",
-      environmental: "Condition Assessment"
+      environmental: ""  // Remove title for environmental since it will be shown under condition
     };
     return titles[type] || type;
   };
@@ -68,29 +68,44 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ responses }) => {
     return order.indexOf(a.type) - order.indexOf(b.type);
   });
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {sortedResponses.map((response, index) => (
-        <div
-          key={index}
-          className={`p-6 rounded-lg ${getBackgroundColor(response.severity)} 
-            border border-gray-700/20 backdrop-blur-sm transition-all duration-200`}
-        >
-          <div className="flex items-start gap-4">
-            {getIcon(response.type, response.severity)}
-            <div className="flex-1">
-              {getTitle(response.type) && (
-                <h3 className="text-lg font-medium mb-3 text-gray-100">
-                  {getTitle(response.type)}
-                </h3>
+  // Group environmental content with condition assessment
+  const renderContent = (response: Response, index: number) => {
+    const environmentalResponse = responses.find(r => r.type === "environmental");
+    
+    return (
+      <div
+        key={index}
+        className={`p-6 rounded-lg ${getBackgroundColor(response.severity)} 
+          border border-gray-700/20 backdrop-blur-sm transition-all duration-200`}
+      >
+        <div className="flex items-start gap-4">
+          {getIcon(response.type, response.severity)}
+          <div className="flex-1">
+            {getTitle(response.type) && (
+              <h3 className="text-lg font-medium mb-3 text-gray-100">
+                {getTitle(response.type)}
+              </h3>
+            )}
+            <div className="space-y-2 text-gray-300">
+              {formatContent(response.content)}
+              {response.type === "condition" && environmentalResponse && (
+                <div className="mt-4 pt-4 border-t border-gray-700/20">
+                  <h4 className="text-md font-medium mb-2 text-gray-100">Environmental Impact</h4>
+                  {formatContent(environmentalResponse.content)}
+                </div>
               )}
-              <div className="space-y-2 text-gray-300">
-                {formatContent(response.content)}
-              </div>
             </div>
           </div>
         </div>
-      ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {sortedResponses
+        .filter(response => response.type !== "environmental")
+        .map((response, index) => renderContent(response, index))}
     </div>
   );
 };
