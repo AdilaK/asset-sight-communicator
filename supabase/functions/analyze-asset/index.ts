@@ -46,22 +46,8 @@ serve(async (req) => {
 
 Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      // Hyper-optimized prompt for chat/voice interactions
-      systemPrompt = `Technical equipment specialist. Deliver ultra-concise, highly technical responses.
-
-Format:
-- 1-2 sentences per key point
-- Technical specifications only
-- Quantifiable data only
-- ${isVoiceInput ? 'Clear speech-optimized' : 'Maximum technical precision'}
-- No qualitative statements
-
-Structure:
-1. Core specs/parameters
-2. Technical constraints
-3. Compliance data (if applicable)
-
-Maintain complete technical accuracy while using minimal words.`
+      // Natural conversation mode - minimal system prompt
+      systemPrompt = `You are a technical equipment specialist. Respond naturally while maintaining technical accuracy.`
     } else {
       systemPrompt = `Technical analyst ready. Awaiting data.`
     }
@@ -110,9 +96,9 @@ Maintain complete technical accuracy while using minimal words.`
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.1,
-          topK: 16,
-          topP: 0.8,
+          temperature: 0.7, // Increased for more natural responses
+          topK: 40,        // Increased for more variety
+          topP: 0.9,       // Increased for more expressive responses
         },
       })
     })
