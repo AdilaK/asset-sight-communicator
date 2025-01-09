@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { image, prompt, conversationHistory } = await req.json()
+    const { image, prompt, conversationHistory, isVoiceInput } = await req.json()
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     
     if (!apiKey) {
@@ -22,6 +22,7 @@ serve(async (req) => {
     console.log('Processing request with prompt:', prompt)
     console.log('Conversation history:', conversationHistory)
     console.log('Image data received:', image ? 'Yes' : 'No')
+    console.log('Is voice input:', isVoiceInput)
 
     let systemPrompt = ''
     if (image) {
@@ -45,13 +46,15 @@ serve(async (req) => {
 
 Use only technical terms. Focus on measurable data.`
     } else if (prompt) {
-      systemPrompt = `Technical equipment analyst. 
-Focus on:
-- Specs
-- Standards
-- Parameters
-- Measurements
-Use only technical terms.`
+      // Different prompt for chat/voice interactions
+      systemPrompt = `You are a technical equipment specialist providing concise, highly technical responses.
+Guidelines:
+- Respond in clear, natural paragraphs optimized for speech
+- Use precise technical terminology and specifications
+- Focus on quantifiable data and measurable parameters
+- Maintain brevity while ensuring complete information
+- Adapt tone based on ${isVoiceInput ? 'voice' : 'chat'} interaction
+- Structure response for optimal text-to-speech flow`
     } else {
       systemPrompt = `Technical analyst ready. Awaiting data.`
     }
@@ -88,6 +91,8 @@ Use only technical terms.`
         }
       })
     }
+
+    console.log('Sending request to Gemini API with messages:', messages)
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent', {
       method: 'POST',
