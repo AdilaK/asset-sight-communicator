@@ -20,6 +20,7 @@ export const useImageAnalysis = () => {
   const [responses, setResponses] = useState<Response[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<Conversation[]>([]);
+  const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
   const lastProcessedTime = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyzedImagesRef = useRef(new Set<string>());
@@ -88,7 +89,8 @@ export const useImageAnalysis = () => {
         },
         body: JSON.stringify({
           image: base64Image,
-          conversationHistory
+          conversationHistory,
+          machineId: selectedMachineId
         })
       });
 
@@ -179,7 +181,7 @@ export const useImageAnalysis = () => {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [toast, isAnalyzing, conversationHistory]);
+  }, [toast, isAnalyzing, conversationHistory, selectedMachineId]);
 
   const processImageData = useCallback(
     (imageData: ImageData, isFromCamera: boolean = false) => {
@@ -193,6 +195,7 @@ export const useImageAnalysis = () => {
     isAnalyzing,
     processImageData,
     conversationHistory,
-    setConversationHistory
+    setConversationHistory,
+    setSelectedMachineId
   };
 };

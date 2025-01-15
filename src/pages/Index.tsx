@@ -3,6 +3,8 @@ import CameraView from "@/components/Camera";
 import ResponseDisplay from "@/components/ResponseDisplay";
 import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
+import MachineSelector from "@/components/MachineSelector";
+import DocumentationContext from "@/components/DocumentationContext";
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { speakText } from "@/utils/textToSpeech";
@@ -20,6 +22,7 @@ const Index = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasInitialAnalysis, setHasInitialAnalysis] = useState(false);
+  const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
 
   const features = [
     {
@@ -126,9 +129,17 @@ const Index = () => {
   }, [toast, conversationHistory]);
 
   const handleImageAnalysis = useCallback((imageData: ImageData) => {
+    if (!selectedMachineId) {
+      toast({
+        title: "Machine Selection Required",
+        description: "Please select a machine before starting the inspection.",
+        variant: "destructive",
+      });
+      return;
+    }
     processImageData(imageData);
     setHasInitialAnalysis(true);
-  }, [processImageData]);
+  }, [processImageData, selectedMachineId, toast]);
 
   return (
     <div className="min-h-screen bg-primary text-primary-foreground p-4 md:p-6 font-cabinet">
@@ -161,6 +172,14 @@ const Index = () => {
           </div>
           
           <div className="grid gap-4">
+            <div className="flex justify-center">
+              <MachineSelector onSelect={(id) => setSelectedMachineId(id)} />
+            </div>
+            
+            {selectedMachineId && (
+              <DocumentationContext machineId={selectedMachineId} />
+            )}
+
             <CameraView onFrame={handleImageAnalysis} />
             <div className="flex justify-center items-center gap-4">
               <span className="text-sm text-muted-foreground">or</span>

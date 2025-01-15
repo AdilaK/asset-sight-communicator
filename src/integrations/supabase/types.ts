@@ -93,6 +93,47 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_documentation: {
+        Row: {
+          asset_id: string
+          content: string
+          created_at: string
+          document_type: string
+          id: string
+          metadata: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          content: string
+          created_at?: string
+          document_type: string
+          id?: string
+          metadata?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          content?: string
+          created_at?: string
+          document_type?: string
+          id?: string
+          metadata?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_documentation_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           created_at: string
