@@ -5,6 +5,7 @@ import AnalysisInput from "@/components/AnalysisInput";
 import ImageUpload from "@/components/ImageUpload";
 import MachineSelector from "@/components/MachineSelector";
 import DocumentationContext from "@/components/DocumentationContext";
+import PdfUpload from "@/components/PdfUpload"; // Import the new PdfUpload component
 import { useImageAnalysis } from "@/hooks/useImageAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { speakText } from "@/utils/textToSpeech";
@@ -177,7 +178,20 @@ const Index = () => {
             </div>
             
             {selectedMachineId && (
-              <DocumentationContext machineId={selectedMachineId} />
+              <>
+                <DocumentationContext machineId={selectedMachineId} />
+                <div className="flex justify-center">
+                  <PdfUpload 
+                    assetId={selectedMachineId} 
+                    onUploadComplete={() => {
+                      toast({
+                        title: "Documentation Updated",
+                        description: "The machine documentation has been refreshed",
+                      });
+                    }} 
+                  />
+                </div>
+              </>
             )}
 
             <CameraView onFrame={handleImageAnalysis} />
